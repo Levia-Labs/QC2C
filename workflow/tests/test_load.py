@@ -3,6 +3,7 @@ from dataclasses import replace
 import pytest
 from conftest import WORLD_FEATURES, feature, square, write_inputs
 
+from qc2c_build.config import ConfigError
 from qc2c_build.load import MissingOverride, load_features
 
 
@@ -25,10 +26,27 @@ def test_usa_or_states(world):
     countries = [feature("USA", "United States", [square(-100, 30, -80, 40)]),
                  feature("PRI", "Puerto Rico", [square(-67, 18, -65, 19)])]
     states = [feature("NY", "New York", [square(-80, 35, -75, 40)]),
-              feature("PR", "Puerto Rico", [square(-67, 18, -65, 19)])]
+              feature("PR", "Puerto Rico", [square(-67, 18, -65, 19)]),
+              feature("VI", "Virgin Islands", [square(-65, 17, -64, 18)])]
     write_inputs(world.input_dir, countries, states=states)
     assert codes(world) == ["PRI", "USA"]
-    assert codes(replace(world, us_states=True)) == ["NY", "PRI"]
+    with_states = codes(replace(world, us_states=True))
+    assert with_states == ["NY", "PRI"]
+    assert "VI" not in with_states
+
+
+def test_override_wins_over_iso_code(world):
+    write_inputs(world.input_dir, [feature("AAA", "Name", [square(0, 0, 1, 1)])],
+                 overrides={"Name": "BBB"})
+    assert codes(world) == ["BBB"]
+
+
+def test_state_without_code_names_feature(world):
+    state = feature("NY", "Lost State", [square(-80, 35, -75, 40)])
+    del state["properties"]["ISO_A3"]
+    write_inputs(world.input_dir, [], states=[state])
+    with pytest.raises(ConfigError, match="Lost State"):
+        load_features(replace(world, us_states=True))
 
 
 def test_same_code_dissolves(world):

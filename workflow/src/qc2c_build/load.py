@@ -28,6 +28,7 @@ def read_json(path: Path) -> dict:
 
 
 def resolve_code(properties: dict, overrides: dict[str, str]) -> str:
+    """Overrides win over ISO_A3, so the override file may remap any area."""
     name = properties.get("ADMIN", "")
     if name in overrides:
         return overrides[name]
@@ -47,7 +48,10 @@ def load_features(cfg: BuildConfig) -> list[Feature]:
         grouped[code].append(polygonal(shape(item["geometry"])))
     if cfg.us_states:
         for item in read_json(cfg.input_file("us_states.json"))["features"]:
-            code = item["properties"]["ISO_A3"]
+            code = item["properties"].get("ISO_A3")
+            if code is None:
+                name = item["properties"].get("ADMIN", "")
+                raise ConfigError(f"state feature {name!r} has no ISO_A3")
             if code not in US_TERRITORIES:
                 grouped[code].append(polygonal(shape(item["geometry"])))
     features = [(code, polygonal(shapely.union_all(grouped[code]))) for code in sorted(grouped)]
