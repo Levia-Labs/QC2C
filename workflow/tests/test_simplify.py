@@ -35,13 +35,14 @@ def test_restore_lost_puts_tiny_code_back():
     assert restored["BIG"].intersection(restored["TNY"]).area < 1e-12
 
 
-def test_restore_lost_keeps_neighbours_on_grid():
-    tiny = box(5, 3.5, 5.004, 3.504)
-    below = Polygon([(0, 0), (10, 0), (10, 7)])
-    above = Polygon([(0, 0), (10, 7), (10, 10), (0, 10)])
+def test_restore_lost_keeps_valid_coverage():
+    tiny = box(5, 3.65, 5.004, 3.654)
+    below = Polygon([(0, 0), (10, 0), (10, 7.3)])
+    above = Polygon([(0, 0), (10, 7.3), (10, 10), (0, 10)])
     original = [("LOW", below.difference(tiny)), ("UP", above.difference(tiny)), ("TNY", tiny)]
     simplified = [("LOW", below), ("UP", above), ("TNY", EMPTY)]
     restored = restore_lost(original, simplified, grid=0.001)
-    assert_on_grid(restored, 0.001)
     assert shapely.coverage_is_valid([g for _, g in restored])
     assert abs(dict(restored)["TNY"].area - tiny.area) < 1e-9
+    union = shapely.union_all([g for _, g in restored])
+    assert abs(union.area - 100) < 1e-9

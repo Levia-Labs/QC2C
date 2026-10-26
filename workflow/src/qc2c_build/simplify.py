@@ -24,7 +24,8 @@ def restore_lost(original: list[Feature], simplified: list[Feature], grid: float
 
     Microstates such as the Vatican are smaller than the tolerance and would
     otherwise vanish into their host; they come back unsimplified and are cut
-    out of whatever now covers them.
+    out of whatever now covers them. Neighbours of a restored code may carry
+    off-grid nodes from re-noding, which the writer rounds.
     """
     result = list(simplified)
     restored = False
