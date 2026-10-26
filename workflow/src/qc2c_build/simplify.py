@@ -4,7 +4,7 @@ from __future__ import annotations
 import shapely
 
 from .config import BuildConfig
-from .geom import polygonal
+from .geom import make_coverage, polygonal
 from .load import Feature
 
 
@@ -27,6 +27,7 @@ def restore_lost(original: list[Feature], simplified: list[Feature], grid: float
     out of whatever now covers them.
     """
     result = list(simplified)
+    restored = False
     for index, (code, geom) in enumerate(original):
         if result[index][1].area >= keep * geom.area:
             continue
@@ -35,6 +36,10 @@ def restore_lost(original: list[Feature], simplified: list[Feature], grid: float
             patch = geom  # smaller than one grid cell: ship it unsnapped
         for other, (other_code, other_geom) in enumerate(result):
             if other != index and other_geom.intersects(patch):
-                result[other] = (other_code, polygonal(other_geom.difference(patch)))
+                result[other] = (other_code, polygonal(
+                    shapely.set_precision(other_geom.difference(patch), grid)))
         result[index] = (code, patch)
-    return [(code, geom) for code, geom in result if not geom.is_empty]
+        restored = True
+    kept = [(code, geom) for code, geom in result if not geom.is_empty]
+    # Cutting snapped neighbours leaves slivers; re-noding keeps the coverage valid.
+    return make_coverage(kept) if restored else kept
