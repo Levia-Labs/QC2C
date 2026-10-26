@@ -9,7 +9,7 @@ from shapely.geometry import MultiPoint, box
 from shapely.geometry.base import BaseGeometry
 
 from .config import BuildConfig
-from .geom import polygonal
+from .geom import make_coverage, polygonal
 from .load import Feature
 
 WORLD = box(-180, -90, 180, 90)
@@ -53,4 +53,4 @@ def build_partition(features: list[Feature], cfg: BuildConfig) -> list[Feature]:
     for index, (code, geom) in enumerate(land):
         owned_sea = shapely.intersection(shapely.union_all(cells.get(index, [])), sea)
         result.append((code, polygonal(shapely.union(geom, owned_sea))))
-    return result
+    return make_coverage(result)

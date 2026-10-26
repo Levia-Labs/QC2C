@@ -1,6 +1,7 @@
 from dataclasses import replace
 
 import pytest
+import shapely
 from conftest import WORLD_FEATURES, feature, square, write_inputs
 
 from qc2c_build.config import ConfigError
@@ -69,3 +70,8 @@ def test_invalid_geometry_is_repaired(world):
     write_inputs(world.input_dir, [feature("BOW", "Bowtie", bowtie)])
     [(_, geom)] = load_features(world)
     assert geom.is_valid and geom.area > 0
+
+
+def test_loaded_features_form_a_coverage(world):
+    result = load_features(world)
+    assert shapely.coverage_is_valid([g for _, g in result])

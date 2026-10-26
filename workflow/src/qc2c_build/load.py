@@ -10,7 +10,7 @@ from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
 from .config import BuildConfig, ConfigError
-from .geom import polygonal
+from .geom import make_coverage, polygonal
 
 NO_CODE = "-99"
 # State-file entries that duplicate an ISO country entry in countries.json.
@@ -59,12 +59,5 @@ def load_features(cfg: BuildConfig) -> list[Feature]:
 
 
 def _remove_overlaps(features: list[Feature]) -> list[Feature]:
-    """Later codes give up area an earlier code already holds, so the result is a coverage."""
-    tree = shapely.STRtree([geom for _, geom in features])
-    result: list[Feature] = []
-    for index, (code, geom) in enumerate(features):
-        for earlier in tree.query(geom, predicate="intersects"):
-            if earlier < index:
-                geom = polygonal(geom.difference(result[earlier][1]))
-        result.append((code, geom))
-    return [(code, geom) for code, geom in result if not geom.is_empty]
+    """Earlier codes keep overlapped area; the result is a valid coverage."""
+    return make_coverage(features)
