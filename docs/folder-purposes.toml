@@ -2,7 +2,8 @@
 # Refresh: uv run python .crepidoma/tools/folder_readme.py update
 
 [folders]
-".claude" = "Claude Code settings for this repo; opts in to the Crepidoma plugin."
+".github/workflows" = "GitHub Actions: publishing a GitHub release publishes both packages to PyPI and npm through trusted publishing."
+".claude" ="Claude Code settings for this repo; opts in to the Crepidoma plugin."
 ".ratchet" = "Ratchet baselines; numbers only move in the good direction."
 "assets" = "Brand assets used by the READMEs."
 "docs" = "Repository documentation and README generator inputs."
@@ -37,7 +38,8 @@
 "folder-purposes.toml" = "Folder and file purposes for the generated README contents lists."
 "logo.svg" = "Project logo shown in the root README."
 "long-files.baseline" = "Files allowed over the line cap, with their current length."
-"settings.json" = "Shared Claude Code settings committed for every collaborator."
+"release.yml" = "Builds, tests and publishes both packages on a published GitHub release."
+"settings.json" ="Shared Claude Code settings committed for every collaborator."
 "world_sectors.json" = "Sector manifest: bounding box and country centers per sector file."
 "world_sectors.json.gz" = "Gzipped sector manifest: bounding box and country centers per sector file."
 "countries.json" = "Country border polygons used as pipeline input."
