@@ -13,3 +13,4 @@ includes:
   ci: .crepidoma/taskfiles/ci
   rtk: .crepidoma/taskfiles/rtk
   setup: .crepidoma/taskfiles/setup
+  workflow: ./tasks/workflow.yml

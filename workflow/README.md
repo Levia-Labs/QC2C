@@ -1,37 +1,57 @@
 # Workflow
 
-Data pipeline that turns raw country borders into the compact sector files shipped by the [Python](../packages/python/README.md) and [TypeScript](../packages/typescript/README.md) packages.
-
-## Stages
-
-Each stage reads the previous stage's output from [data/output](data/output) and writes its own folder.
-
-| Stage | Status | What it does |
-| --- | --- | --- |
-| [1](scripts/stage_1/README.md) | done | Builds the base map, simplifies each country with convex hull and `simplify`, merges non-intersecting countries and splits the world into sectors. |
-| [2](scripts/stage_2/README.md) | done | Removes border points that change neither area nor intersections. |
-| [3](scripts/stage_3/README.md) | done | Minifies the JSON to ASCII and gzips it. |
-| [4](scripts/stage_4/README.md) | done | Adds each country's center to the sector manifest. |
-| [5](scripts/stage_5/README.md) | planned | Merges self-overlapping polygons within each country. |
-| [6](scripts/stage_6/README.md) | planned | Simplifies with Voronoi diagrams so every piece of land belongs to a country. |
-
-Stages 3 and later produce `.json.gz` files. Gzip was chosen because browsers decompress it natively; Brotli might be smaller but is less widely supported for this use.
+`qc2c-build` turns source country borders into the sector files shipped by the [Python](../packages/python/README.md) and [TypeScript](../packages/typescript/README.md) packages, then checks that the result still matches the source.
 
 ## Run
 
-Inputs live in [data/input](data/input): `countries.json`, `us_states.json` and the `world_sectors.json` manifest. Stage scripts need `shapely` and `tqdm`; the preview also needs `geopandas` and `matplotlib`.
+Everything runs in Docker Compose; you need Docker and [Task](https://taskfile.dev).
 
 ```bash
-python workflow/scripts/stage_1/main.py
-python workflow/scripts/preview_world_sectors.py  # optional: check the sector map for artifacts
+task workflow:build                  # writes workflow/data/output/latest
+task workflow:validate               # checks it against the source borders
+task workflow:publish                # copies it into both packages and rebuilds dist
+task workflow:test                   # pipeline, Python and Node suites in parallel
+task workflow:preview                # draws latest/preview.png
 ```
 
-Stage 1 took about 900 seconds on 2023-12-24.
+Pass settings after `--`, for example `task workflow:build -- --tolerance 0.1 --out coarse`, then `task workflow:validate -- --tolerance 0.1 --out coarse`.
 
-## Roadmap
+## Stages
 
-1. Represent islands as rectangles or triangles when they intersect nothing else, and straighten shore lines.
-2. Use Voronoi diagrams to build separation regions between countries (stage 6).
-3. Verify output against input: every coordinate assigned to a country in the input must map to the same country in the output. Build the test set from tricky pairs (enclaves, irregular borders) and from a grid of land points.
+1. **Load.** Reads `countries.json`, applies [code_overrides.json](data/input/code_overrides.json) to areas without an ISO code, repairs invalid shapes, clamps coordinates to the world and builds an exact coverage, so neighbours share identical borders.
+2. **Partition.** Gives every sea point to the nearest country through Voronoi cells of the coastlines, so coastlines disappear from the data.
+3. **Simplify.** Simplifies shared borders once, so neighbours never gap or overlap, snaps to the output grid and restores the land of microstates that simplification would swallow.
+4. **Sectors.** Clips to the sector boxes in [world_sectors.json](data/input/world_sectors.json), cuts holes so first-match lookup is exact, and computes country centers.
+5. **Write.** Writes JSON and gzip files plus `build.json` with the settings, input hashes and library versions.
 
-Done: shore line reduction (stage 2).
+## Settings
+
+Defaults live in [qc2c.toml](qc2c.toml). Environment variables `QC2C_<NAME>` override them, and flags override both.
+
+| Meaning | Flag | Default |
+| --- | --- | --- |
+| Border simplification in degrees | `--tolerance` | 0.05 |
+| Coordinate decimals in the output | `--decimals` | 3 |
+| Simplification before the sea partition | `--presimplify` | 0.01 |
+| Coastline sampling for the sea partition, degrees | `--voronoi-spacing` | 0.25 |
+| Sea mode: `nearest`, or `distance` to return no country far from land | `--sea` | nearest |
+| Distance limit for `--sea distance` | `--sea-distance-km` | 200 |
+| Return US state codes instead of `USA` | `--us-states` / `--no-us-states` | off |
+| Sector boxes, which must tile the world | `--sectors` | world_sectors.json |
+| Codes for areas without an ISO code | `--overrides` | code_overrides.json |
+| Output folder name | `--out` | latest |
+| Random interior test points per country | `--samples` | 40 |
+| Required accuracy near borders | `--min-border-accuracy` | see qc2c.toml |
+| Seed for test points | `--seed` | 1 |
+
+## Validation
+
+Every source vertex and 40 random interior points per country are looked up in the output. Points farther from any other country than `2 * (presimplify + tolerance + grid + 0.001) + voronoi_spacing / 2` degrees must return their own code; points on a shared border are not scored; points in between must reach `min_border_accuracy`. Every source code must appear in the output. Results go to `validation.json`, and a sample of 500 safe points goes to `points.json`, which both library test suites check.
+
+## Without Docker
+
+```bash
+uv run --project workflow --all-extras qc2c-build build --input-dir workflow/data/input --output-dir workflow/data/output --config workflow/qc2c.toml
+```
+
+Only the Docker build is the reference; `task workflow:check` compares the package data with it.

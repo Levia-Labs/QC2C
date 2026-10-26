@@ -6,6 +6,6 @@
 
 <!-- contents:start -->
 
-- [`qc2c_build/`](qc2c_build/README.md) - The qc2c_build package: settings and the sector data build pipeline.
+- [`qc2c_build/`](qc2c_build/README.md) - Pipeline modules: load, partition, simplify, sectors, write, validate, publish, preview, cli.
 
 <!-- contents:end -->
