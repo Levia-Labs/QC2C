@@ -33,10 +33,10 @@ def test_get_country_polygon_and_multipolygon():
     "lat,lng,expected",
     [
         (52.23, 21.01, "POL"),
-        (40.71, -74.0, "NY"),  # bundled data splits the US into state codes
+        (40.71, -74.0, "USA"),
         (-33.87, 151.21, "AUS"),
         (35.68, 139.69, "JPN"),
-        (0, -140, None),
+        (0, -140, "PYF"),  # open ocean returns the nearest country (Marquesas)
     ],
 )
 def test_coordinates_to_country(lat, lng, expected):

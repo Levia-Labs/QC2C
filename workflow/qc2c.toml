@@ -10,4 +10,4 @@ us_states = false
 samples = 40
 seed = 1
 # Set from the first full default build (Task 10); only ever raise it.
-min_border_accuracy = 0.0
+min_border_accuracy = 0.98
