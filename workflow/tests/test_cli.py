@@ -36,7 +36,8 @@ def test_cli_malformed_config_exits_2(world, tmp_path, capsys):
 
 
 def test_cli_preview_without_matplotlib_exits_2(world, monkeypatch, capsys):
-    monkeypatch.setitem(sys.modules, "qc2c_build.preview", None)
+    assert main(["build", *args(world)]) == 0
+    monkeypatch.setitem(sys.modules, "matplotlib", None)
     assert main(["preview", *args(world)]) == 2
     assert "preview needs the 'preview' extra" in capsys.readouterr().err
 

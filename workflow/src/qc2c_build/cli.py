@@ -45,12 +45,15 @@ def _compare(cfg: BuildConfig) -> int:
 
 
 def _preview(cfg: BuildConfig) -> int:
-    try:
-        from .preview import render
-    except ImportError as error:
-        raise ConfigError("preview needs the 'preview' extra: matplotlib") from error
+    from .preview import render
 
-    print(f"preview written to {render(cfg)}")
+    try:
+        written = render(cfg)
+    except ImportError as error:
+        if (error.name or "").split(".")[0] != "matplotlib":
+            raise
+        raise ConfigError("preview needs the 'preview' extra: matplotlib") from error
+    print(f"preview written to {written}")
     return 0
 
 
