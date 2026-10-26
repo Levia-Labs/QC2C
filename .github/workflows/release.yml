@@ -15,6 +15,17 @@ permissions:
   contents: read
 
 jobs:
+  validate-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - uses: go-task/setup-task@a00fbb05ce67b35648be3c78cbc9fd85354c757e # v2.2.0
+      - run: task workflow:build
+      - run: task workflow:validate
+      - run: task workflow:check
+
   build-python:
     runs-on: ubuntu-latest
     defaults:
@@ -31,7 +42,7 @@ jobs:
           path: packages/python/dist/
 
   publish-pypi:
-    needs: build-python
+    needs: [build-python, validate-data]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -63,7 +74,7 @@ jobs:
           path: packages/typescript/qc2c-*.tgz
 
   publish-npm:
-    needs: build-npm
+    needs: [build-npm, validate-data]
     runs-on: ubuntu-latest
     environment: npm
     permissions:

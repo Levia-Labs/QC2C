@@ -38,6 +38,7 @@
 "packages/fixtures" = "Points with expected codes, written by qc2c-build publish and used by both library test suites."
 
 [files]
+"ci.yml" = "Pull request gate: Docker test suites, data build, validation and package data check."
 "folder-purposes.toml" = "Folder and file purposes for the generated README contents lists."
 "logo.svg" = "Project logo shown in the root README."
 "long-files.baseline" = "Files allowed over the line cap, with their current length."

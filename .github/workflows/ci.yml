@@ -1,0 +1,23 @@
+# Runs every test suite in Docker, rebuilds the data and checks the packages ship that build.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - uses: go-task/setup-task@a00fbb05ce67b35648be3c78cbc9fd85354c757e # v2.2.0
+      - run: task workflow:test
+      - run: task workflow:build
+      - run: task workflow:validate
+      - run: task workflow:check
