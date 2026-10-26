@@ -91,7 +91,10 @@ def load_config(toml_path: Path | None = None, env: Mapping[str, str] | None = N
                 cli: Mapping[str, Any] | None = None) -> BuildConfig:
     values: dict[str, Any] = {}
     if toml_path is not None and toml_path.is_file():
-        data = tomllib.loads(toml_path.read_text(encoding="utf-8"))
+        try:
+            data = tomllib.loads(toml_path.read_text(encoding="utf-8"))
+        except (tomllib.TOMLDecodeError, UnicodeDecodeError, OSError) as error:
+            raise ConfigError(f"cannot read {toml_path}: {error}") from error
         values.update({key: _coerce(key, value) for key, value in data.items()})
     env = os.environ if env is None else env
     for name in FIELDS:

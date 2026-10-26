@@ -39,6 +39,13 @@ def test_unknown_toml_key(tmp_path: Path):
         load_config(toml, env={})
 
 
+def test_malformed_toml_is_config_error(tmp_path: Path):
+    toml = tmp_path / "qc2c.toml"
+    toml.write_text("sea = [", encoding="utf-8")
+    with pytest.raises(ConfigError, match="qc2c.toml"):
+        load_config(toml, env={})
+
+
 @pytest.mark.parametrize("bad", [{"sea": "ocean"}, {"out": "../x"}, {"decimals": 9}, {"tolerance": -1},
                                  {"samples": 0}, {"min_border_accuracy": 1.5}])
 def test_invalid_values(bad):
