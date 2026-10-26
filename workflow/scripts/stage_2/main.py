@@ -48,7 +48,7 @@ def copy_and_remove(source_folder, destination_folder):
 
 def simplify_sector(sector: str):
     # get sector data
-    with open(path.join(source_directory, '../../data/output/stage_2', sector), 'r') as file:
+    with open(path.join(source_directory, '../../data/output/stage_2', sector), 'r', encoding='utf-8') as file:
         sector_data = json.load(file)
 
     # iterate through sector and simplify it
@@ -63,7 +63,7 @@ def simplify_sector(sector: str):
         sector_data[country] = results
 
     # save sector data
-    with open(path.join(source_directory, '../../data/output/stage_2', sector), 'w') as _:
+    with open(path.join(source_directory, '../../data/output/stage_2', sector), 'w', encoding='utf-8') as _:
         json.dump(sector_data, _, separators=(',', ':'))
 
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
                     path.join(source_directory, '../../data/output/stage_2'))
 
     # get world manifest
-    with open(path.join(source_directory, '../../data/output/stage_2', 'world_sectors.json'), 'r') as file:
+    with open(path.join(source_directory, '../../data/output/stage_2', 'world_sectors.json'), 'r', encoding='utf-8') as file:
         world_sectors = json.load(file)
 
     # simplify sectors N times to get even better approximations

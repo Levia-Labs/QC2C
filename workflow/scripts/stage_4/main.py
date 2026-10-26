@@ -44,7 +44,7 @@ if __name__ == '__main__':
                     path.join(source_directory, '../../data/output/stage_4'))
 
     # get world manifest
-    with open(path.join(source_directory, '../../data/output/stage_4', 'world_sectors.json'), 'r') as file:
+    with open(path.join(source_directory, '../../data/output/stage_4', 'world_sectors.json'), 'r', encoding='utf-8') as file:
         world_sectors = json.load(file)
 
     # simplify sectors

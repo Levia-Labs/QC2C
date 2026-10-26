@@ -21,7 +21,10 @@ export const getSector = (
   // Iterate through each sector entry in the manifest
   for (const [key, bounds] of Object.entries(sectors_manifest)) {
     // Destructure the bounding box into min/max latitudes and longitudes
-    const [lat_min, lng_min, lat_max, lng_max] = bounds;
+    // Accept a bare bounds array or an object carrying a "bounds" entry
+    const [lat_min, lng_min, lat_max, lng_max] = Array.isArray(bounds)
+      ? bounds
+      : (bounds as { bounds: number[] }).bounds;
 
     // Check if the coordinate lies within the bounding box
     if (
@@ -57,9 +60,15 @@ export const getCountry = (
   const point = [coordinates.lat, coordinates.lng];
 
   // Iterate through each country's polygon in the sector manifest
-  for (const [key, polygon] of Object.entries(sector_manifest)) {
-    // Return the country key if the point lies inside the polygon
-    if (pointInPolygon(point, polygon)) {
+  for (const [key, value] of Object.entries(sector_manifest)) {
+    // Accept a single polygon or a list of polygons (multipolygon)
+    const polygons: number[][][] =
+      Array.isArray(value) && Array.isArray(value[0]) && typeof value[0][0] === "number"
+        ? [value as number[][]]
+        : (value as number[][][]);
+
+    // Return the country key if the point lies inside any polygon
+    if (polygons.some((polygon) => pointInPolygon(point, polygon))) {
       return key;
     }
   }

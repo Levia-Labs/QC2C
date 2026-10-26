@@ -19,7 +19,7 @@ def get_sector_grid(coordinates) -> list:
 def get_map(input_file) -> list:
     result = []
 
-    with open(input_file, 'r') as datafile:
+    with open(input_file, 'r', encoding='utf-8') as datafile:
         data = json.load(datafile)
         data = data["features"]
         # Create a new list with objects containing only property1 and property2
@@ -146,7 +146,7 @@ def simplify_polygons(polygons: list) -> dict:
 
 def save_sectors(assigned_polygons):
     for output_file, data in assigned_polygons.items():
-        with open(path.join(source_directory, '../../data/output/stage_1', output_file), 'w') as _:
+        with open(path.join(source_directory, '../../data/output/stage_1', output_file), 'w', encoding='utf-8') as _:
             json.dump(data, _, separators=(',', ':'))
 
 
@@ -167,7 +167,7 @@ if __name__ == '__main__':
                 path.join(source_directory, '../../data/output/stage_1', 'world_sectors.json'))
 
     # Coordinates for sectors (min_x, min_y, max_x, max_y)
-    with open(path.join(source_directory, '../../data/input', 'world_sectors.json'), 'r') as file:
+    with open(path.join(source_directory, '../../data/input', 'world_sectors.json'), 'r', encoding='utf-8') as file:
         world_sector_coordinates = json.load(file)
     world_sectors = get_sector_grid(world_sector_coordinates)
 

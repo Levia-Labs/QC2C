@@ -17,11 +17,11 @@ def copy_and_remove(source_folder, destination_folder):
 def simplify_sector(sector: str):
     sector_path = path.join(source_directory, '../../data/output/stage_3')
     # get sector data
-    with open(path.join(sector_path, sector), 'r') as file:
+    with open(path.join(sector_path, sector), 'r', encoding='utf-8') as file:
         sector_data = json.load(file)
 
     # Dump the data to a JSON file with ASCII encoding
-    with open(path.join(sector_path, sector), 'w') as _:
+    with open(path.join(sector_path, sector), 'w', encoding='utf-8') as _:
         json.dump(sector_data, _, ensure_ascii=True, separators=(',', ':'))
 
     # reduce file size:
@@ -37,7 +37,7 @@ def adjust_world_sectors_manifest():
     source_directory = path.dirname(path.abspath(__file__))
 
     # Load the original JSON file
-    with open(path.join(source_directory, '../../data/output/stage_3/world_sectors.json'), "r") as json_file:
+    with open(path.join(source_directory, '../../data/output/stage_3/world_sectors.json'), "r", encoding='utf-8') as json_file:
         data = json.load(json_file)
 
     # Modify keys by adding ".gz"
@@ -47,7 +47,7 @@ def adjust_world_sectors_manifest():
     minified_json = json_minify.json_minify(json.dumps(modified_data))
 
     # Save the modified and minified data to a new file
-    with open(path.join(source_directory, '../../data/output/stage_3/world_sectors.json'), "w") as output_file:
+    with open(path.join(source_directory, '../../data/output/stage_3/world_sectors.json'), "w", encoding='utf-8') as output_file:
         output_file.write(minified_json)
 
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
                     path.join(source_directory, '../../data/output/stage_3'))
 
     # get world manifest
-    with open(path.join(source_directory, '../../data/output/stage_3', 'world_sectors.json'), 'r') as file:
+    with open(path.join(source_directory, '../../data/output/stage_3', 'world_sectors.json'), 'r', encoding='utf-8') as file:
         world_sectors = json.load(file)
 
     # simplify sectors N times to get even better approximations
