@@ -1,0 +1,2 @@
+[extend]
+path = ".crepidoma/configs/gitleaks.toml"

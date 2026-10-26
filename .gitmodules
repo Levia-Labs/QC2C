@@ -1,0 +1,4 @@
+[submodule ".crepidoma"]
+	path = .crepidoma
+	url = https://github.com/Levia-Labs/Crepidoma
+	branch = main
