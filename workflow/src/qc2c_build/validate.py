@@ -62,25 +62,34 @@ def source_points(features: list[Feature], samples: int, seed: int) -> PointSet:
 
 def classify(points: PointSet, features: list[Feature], width: float) -> np.ndarray:
     codes = np.array([code for code, _ in features], dtype=object)
-    tree = shapely.STRtree([geom for _, geom in features])
+    geoms_src = np.array([geom for _, geom in features], dtype=object)
+    tree = shapely.STRtree(geoms_src)
     geoms = shapely.points(points.xy)
     kind = np.full(len(geoms), CORE, dtype=np.int8)
-    for label, distance in ((BORDER, width), (AMBIGUOUS, 1e-9)):
-        point_index, geom_index = tree.query(geoms, predicate="dwithin", distance=distance)
-        other = codes[geom_index] != points.code[point_index]
-        kind[np.unique(point_index[other])] = label
+    point_index, geom_index = tree.query(geoms, predicate="dwithin", distance=width)
+    other = codes[geom_index] != points.code[point_index]
+    point_index, geom_index = point_index[other], geom_index[other]
+    kind[point_index] = BORDER
+    touching = shapely.distance(geoms[point_index], geoms_src[geom_index]) <= 1e-9
+    kind[point_index[touching]] = AMBIGUOUS
     return kind
 
 
-def _read(path: Path) -> object:
+def _read(path: Path) -> dict:
     try:
-        return json.loads(gzip.decompress(path.read_bytes()))
-    except (OSError, ValueError) as error:
+        data = json.loads(gzip.decompress(path.read_bytes()))
+    except (OSError, EOFError, ValueError) as error:
         raise ValidationError(f"cannot read {path.name}: {error}") from error
+    if not isinstance(data, dict):
+        raise ValidationError(f"{path.name} is not a JSON object")
+    return data
 
 
 def load_output(build_dir: Path) -> tuple[dict, dict[str, dict]]:
     manifest = _read(build_dir / "world_sectors.json.gz")
+    for key, entry in manifest.items():
+        if not isinstance(entry, dict) or not isinstance(entry.get("bounds"), list) or len(entry["bounds"]) != 4:
+            raise ValidationError(f"manifest entry {key} has no valid bounds")
     return manifest, {key: _read(build_dir / key) for key in manifest}
 
 
@@ -108,15 +117,32 @@ def lookup(manifest: dict, sector_files: dict[str, dict], xy: np.ndarray) -> np.
     return result
 
 
-def fixture(points: PointSet, kind: np.ndarray, sectors: Sectors, seed: int, size: int = 500) -> list[dict]:
-    """Seeded core points, one per code first, none on a sector edge (TypeScript checks one sector)."""
+def _by_code(index: np.ndarray, codes: np.ndarray) -> dict[str, np.ndarray]:
+    names, inverse = np.unique(codes[index], return_inverse=True)
+    order = np.argsort(inverse, kind="stable")
+    groups = np.split(index[order], np.cumsum(np.bincount(inverse))[:-1])
+    return dict(zip(names.tolist(), groups))
+
+
+def fixture(points: PointSet, kind: np.ndarray, sectors: Sectors, seed: int, size: int = 500,
+            got: np.ndarray | None = None) -> list[dict]:
+    """Seeded core points, one per code first, none on a sector edge (TypeScript checks one sector).
+
+    A code without a core point falls back to one border point the build resolves to that code (needs got).
+    """
     lat, lng = points.xy[:, 1], points.xy[:, 0]
     edges = np.array(list(sectors.values()), dtype=float)
-    on_lat = np.isclose(lat[:, None], edges[:, [0, 2]][None, :, :].reshape(1, -1), atol=1e-9).any(axis=1)
-    on_lng = np.isclose(lng[:, None], edges[:, [1, 3]][None, :, :].reshape(1, -1), atol=1e-9).any(axis=1)
-    pool = np.flatnonzero((kind == CORE) & ~on_lat & ~on_lng)
+    on_lat = np.isclose(lat[:, None], edges[:, [0, 2]].reshape(1, -1), atol=1e-9).any(axis=1)
+    on_lng = np.isclose(lng[:, None], edges[:, [1, 3]].reshape(1, -1), atol=1e-9).any(axis=1)
+    free = ~on_lat & ~on_lng
+    pool = np.flatnonzero((kind == CORE) & free)
     rng = np.random.default_rng(seed)
-    chosen = [int(rng.choice(pool[points.code[pool] == code])) for code in sorted(set(points.code[pool]))]
+    by_core = _by_code(pool, points.code)
+    chosen = [int(rng.choice(group)) for _, group in sorted(by_core.items())]
+    if got is not None:
+        fallback = np.flatnonzero((kind == BORDER) & free & (got == points.code))
+        chosen += [int(rng.choice(group)) for code, group in sorted(_by_code(fallback, points.code).items())
+                   if code not in by_core]
     rest = np.setdiff1d(pool, chosen)
     extra = rng.choice(rest, size=min(max(size - len(chosen), 0), len(rest)), replace=False)
     picked = sorted(set(chosen) | {int(i) for i in extra})
@@ -154,10 +180,12 @@ def run_validation(cfg: BuildConfig) -> dict:
     border_accuracy = _accuracy(correct, border)
     if border_accuracy < cfg.min_border_accuracy:
         failures.append(f"border accuracy {border_accuracy:.4f} below {cfg.min_border_accuracy}")
-    per_code = {}
-    for code in sorted(source_codes):
-        mask = scored & (points.code == code)
-        per_code[code] = {"points": int(mask.sum()), "accuracy": round(_accuracy(correct, mask), 6)}
+    names, inverse = np.unique(points.code, return_inverse=True)
+    totals = np.bincount(inverse, weights=scored, minlength=len(names))
+    hits = np.bincount(inverse, weights=scored & correct, minlength=len(names))
+    per_code = {str(name): {"points": int(total), "accuracy": round(float(hit / total) if total else 1.0, 6)}
+                for name, total, hit in zip(names, totals, hits)}
+    chosen = fixture(points, kind, sectors, cfg.seed, got=got)
     report = {
         "passed": not failures,
         "failures": failures,
@@ -166,10 +194,11 @@ def run_validation(cfg: BuildConfig) -> dict:
                    "ambiguous": int((kind == AMBIGUOUS).sum())},
         "accuracy": {"overall": _accuracy(correct, scored), "core": _accuracy(correct, core), "border": border_accuracy},
         "worst": sorted(per_code, key=lambda c: (per_code[c]["accuracy"], c))[:10],
+        "fixture_missing": sorted(source_codes - {entry["code"] for entry in chosen}),
         "per_code": per_code,
     }
     cfg.build_dir.mkdir(parents=True, exist_ok=True)
     (cfg.build_dir / "validation.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    points_json = json.dumps(fixture(points, kind, sectors, cfg.seed), separators=(",", ":")) + "\n"
+    points_json = json.dumps(chosen, separators=(",", ":")) + "\n"
     (cfg.build_dir / "points.json").write_text(points_json, encoding="utf-8")
     return report
