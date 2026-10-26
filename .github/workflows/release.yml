@@ -1,0 +1,81 @@
+# Publishes both packages when a GitHub release is published.
+# Uses trusted publishing (OIDC) on PyPI and npm, so no registry tokens live in
+# the repo or in GitHub secrets. Each registry must list this repository, this
+# workflow file (release.yml) and the job's environment as a trusted publisher.
+# Build jobs install dependencies without id-token; only the publish jobs, which
+# run no project code, can mint an OIDC token. Actions are pinned to commit SHAs
+# because they run next to that token.
+name: release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build-python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/python
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      - run: uv run --with pytest pytest -q
+      - run: uv build
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: python-dist
+          path: packages/python/dist/
+
+  publish-pypi:
+    needs: build-python
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: python-dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+
+  build-npm:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/typescript
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm pack
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: npm-package
+          path: packages/typescript/qc2c-*.tgz
+
+  publish-npm:
+    needs: build-npm
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write
+    steps:
+      # npm trusted publishing needs npm 11.5.1 or later, which ships with Node 24.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: npm-package
+      # The tarball is already built and tested; skip prepublishOnly, which would need the sources.
+      - run: npm publish qc2c-*.tgz --access public --ignore-scripts
