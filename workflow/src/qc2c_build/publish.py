@@ -31,18 +31,28 @@ def publish(cfg: BuildConfig) -> list[Path]:
     report_path = cfg.build_dir / "validation.json"
     if not report_path.is_file():
         raise PublishError(f"no validation.json in {cfg.build_dir}; run validate first")
-    if not json.loads(report_path.read_text(encoding="utf-8")).get("passed"):
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except ValueError as error:
+        raise PublishError(f"malformed validation.json: {error}") from error
+    if not isinstance(report, dict) or report.get("passed") is not True:
         raise PublishError("validation failed; not publishing")
-    for target in TARGETS:
-        for folder in ("json", "gz"):
-            for old in (cfg.packages_dir / target / folder).glob("world_sector*"):
-                old.unlink()
+    planned = _planned(cfg)
+    for source, _ in planned:
+        if not source.is_file():
+            raise PublishError(f"build file missing: {source}")
     written = []
-    for source, relative in _planned(cfg):
+    for source, relative in planned:
         destination = cfg.packages_dir / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, destination)
         written.append(destination)
+    kept = set(written)
+    for target in TARGETS:
+        for folder in ("json", "gz"):
+            for old in (cfg.packages_dir / target / folder).glob("world_sector*"):
+                if old not in kept:
+                    old.unlink()
     return written
 
 

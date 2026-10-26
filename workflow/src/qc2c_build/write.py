@@ -16,6 +16,8 @@ def write_build(cfg: BuildConfig, files: dict[str, dict], manifest: dict[str, di
     out.mkdir(parents=True, exist_ok=True)
     for old in out.glob("world_sector*"):
         old.unlink()
+    for stale in ("validation.json", "points.json", "preview.png"):  # a new build invalidates them
+        (out / stale).unlink(missing_ok=True)
     sizes: dict[str, int] = {}
     for name, data in [*files.items(), ("world_sectors.json", manifest)]:
         raw = dump(data)
