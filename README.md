@@ -69,7 +69,7 @@ The data comes from the [build pipeline](workflow/README.md), which gives sea to
 
 ## Limits
 
-QC2C approximates borders. Every point on Earth returns a country: points at sea return the nearest one. Results can be wrong close to a border; the build validates that points farther than about a quarter of a degree from any other country always resolve correctly, and reports accuracy near borders in `validation.json`. In the shipped data, 100% of those points resolve correctly and 98.1% of points near borders do. Use a proper GIS dataset where precision matters.
+QC2C approximates borders. The shipped data assigns every point on Earth to a country: points at sea go to the nearest one. Results can be wrong close to a border. Points farther than about a quarter of a degree from any other country always resolve correctly; accuracy near borders is reported in `validation.json` and enforced by `min_border_accuracy` in [qc2c.toml](workflow/qc2c.toml). Use a proper GIS dataset where precision matters.
 
 The project takes no political position. It does not move borders or decide who owns disputed land; it follows its source data, and areas without an ISO code use the codes in [code_overrides.json](workflow/data/input/code_overrides.json). Keep political views out of issues, commits and pull requests.
 

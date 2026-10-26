@@ -35,7 +35,7 @@ code = get_country(sectors[sector_key], {"lat": 52.23, "lng": 21.01})
 
 | Function | Returns |
 | --- | --- |
-| `coordinates_to_country(coordinates)` | Country code from the bundled data, or `None`. |
+| `coordinates_to_country(coordinates)` | Country code from the bundled data, or `None` when the coordinates fall outside [-90, 90] latitude or [-180, 180] longitude. |
 | `get_sector(manifest, coordinates)` | Key of the first sector whose bounding box contains the point, or `None`. |
 | `get_country(sector, coordinates)` | Key of the first country polygon in the sector that contains the point, or `None`. |
 | `point_in_polygon(point, polygon)` | `True` when `[lat, lng]` lies inside the polygon (ray casting). |

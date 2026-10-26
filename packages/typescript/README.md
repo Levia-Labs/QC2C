@@ -43,7 +43,7 @@ const code = await coordinatesToCountry(
 
 | Function | Returns |
 | --- | --- |
-| `coordinatesToCountry(coordinates, urls)` | Fetches the manifest and one sector file, then returns the country code or `null`. |
+| `coordinatesToCountry(coordinates, urls)` | Fetches the manifest and one sector file, then returns the country code, or `null` when the coordinates fall outside [-90, 90] latitude or [-180, 180] longitude or a fetch fails. |
 | `getSector(manifest, coordinates)` | Key of the first sector whose bounding box contains the point, or `null`. |
 | `getCountry(sector, coordinates)` | Key of the first country polygon in the sector that contains the point, or `null`. |
 

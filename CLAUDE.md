@@ -17,4 +17,4 @@ Directives, agents and hooks come from the crepidoma plugin (github.com/Levia-La
 ## Commands
 
 1. `task --list`; `claude:` and `lint:` come from the Crepidoma submodule.
-2. task workflow:test, workflow:build, workflow:validate, workflow:publish, workflow:check.
+2. `task workflow:test`, `workflow:build`, `workflow:validate`, `workflow:publish`, `workflow:check`.
