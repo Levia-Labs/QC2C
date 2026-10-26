@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -7,25 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.coordinatesToCountry = exports.getCountry = exports.getSector = void 0;
 // Import point-in-polygon utility to check if a point lies inside a polygon
-import pointInPolygon from "point-in-polygon";
-// // Define the name of the manifest file containing global sector boundaries
-// import worldSectorManifest from "./data/json/world_sectors.json";
-// export { worldSectorManifest };
-// import sector1 from "./data/json/world_sector_1.json";
-// import sector2 from "./data/json/world_sector_2.json";
-// import sector3 from "./data/json/world_sector_3.json";
-// import sector4 from "./data/json/world_sector_4.json";
-// import sector5 from "./data/json/world_sector_5.json";
-// import sector6 from "./data/json/world_sector_6.json";
-// export const sectorData = {
-//   sector1,
-//   sector2,
-//   sector3,
-//   sector4,
-//   sector5,
-//   sector6,
-// };
+const point_in_polygon_1 = __importDefault(require("point-in-polygon"));
 /**
  * Find which sector a coordinate falls into based on bounding boxes.
  *
@@ -36,11 +25,14 @@ import pointInPolygon from "point-in-polygon";
  * @param coordinates - Coordinates as LatLng object.
  * @returns Sector key string if found; otherwise null.
  */
-export const getSector = (sectors_manifest, coordinates) => {
+const getSector = (sectors_manifest, coordinates) => {
     // Iterate through each sector entry in the manifest
     for (const [key, bounds] of Object.entries(sectors_manifest)) {
         // Destructure the bounding box into min/max latitudes and longitudes
-        const [lat_min, lng_min, lat_max, lng_max] = bounds;
+        // Accept a bare bounds array or an object carrying a "bounds" entry
+        const [lat_min, lng_min, lat_max, lng_max] = Array.isArray(bounds)
+            ? bounds
+            : bounds.bounds;
         // Check if the coordinate lies within the bounding box
         if (lat_min <= coordinates.lat &&
             coordinates.lat <= lat_max &&
@@ -53,6 +45,7 @@ export const getSector = (sectors_manifest, coordinates) => {
     // Return null if no sector contains the coordinate
     return null;
 };
+exports.getSector = getSector;
 /**
  * Determine the country within a sector by testing polygons.
  *
@@ -63,19 +56,24 @@ export const getSector = (sectors_manifest, coordinates) => {
  * @param coordinates - Coordinates as LatLng object.
  * @returns Country key string if found; otherwise null.
  */
-export const getCountry = (sector_manifest, coordinates) => {
+const getCountry = (sector_manifest, coordinates) => {
     // Represent coordinate as an array to match point-in-polygon input format
     const point = [coordinates.lat, coordinates.lng];
     // Iterate through each country's polygon in the sector manifest
-    for (const [key, polygon] of Object.entries(sector_manifest)) {
-        // Return the country key if the point lies inside the polygon
-        if (pointInPolygon(point, polygon)) {
+    for (const [key, value] of Object.entries(sector_manifest)) {
+        // Accept a single polygon or a list of polygons (multipolygon)
+        const polygons = Array.isArray(value) && Array.isArray(value[0]) && typeof value[0][0] === "number"
+            ? [value]
+            : value;
+        // Return the country key if the point lies inside any polygon
+        if (polygons.some((polygon) => (0, point_in_polygon_1.default)(point, polygon))) {
             return key;
         }
     }
     // Return null if point does not match any polygon
     return null;
 };
+exports.getCountry = getCountry;
 /**
  * Asynchronously convert coordinates to a country name.
  *
@@ -87,7 +85,7 @@ export const getCountry = (sector_manifest, coordinates) => {
  * @param coordinates - Coordinates as LatLng object.
  * @returns Promise resolving to country key string if found; otherwise null.
  */
-export const coordinatesToCountry = (coordinates_1, ...args_1) => __awaiter(void 0, [coordinates_1, ...args_1], void 0, function* (coordinates, urls = {
+const coordinatesToCountry = (coordinates_1, ...args_1) => __awaiter(void 0, [coordinates_1, ...args_1], void 0, function* (coordinates, urls = {
     manifest: "/",
     sectors: "/",
 }) {
@@ -101,7 +99,7 @@ export const coordinatesToCountry = (coordinates_1, ...args_1) => __awaiter(void
         // Parse the sector manifest JSON
         let data = yield response.json();
         // Determine the relevant sector key for the coordinates
-        const sector = getSector(data, coordinates);
+        const sector = (0, exports.getSector)(data, coordinates);
         // Fetch the sector-specific polygon data
         response = yield fetch(`${urls.sectors}/${sector}`);
         // Throw error if request fails
@@ -111,7 +109,7 @@ export const coordinatesToCountry = (coordinates_1, ...args_1) => __awaiter(void
         // Parse the sector polygon data
         data = yield response.json();
         // Determine and return the country within the sector
-        return getCountry(data, coordinates);
+        return (0, exports.getCountry)(data, coordinates);
     }
     catch (error) {
         // Log any fetch or processing errors
@@ -120,3 +118,4 @@ export const coordinatesToCountry = (coordinates_1, ...args_1) => __awaiter(void
         return null;
     }
 });
+exports.coordinatesToCountry = coordinatesToCountry;

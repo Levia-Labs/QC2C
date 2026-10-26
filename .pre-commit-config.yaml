@@ -1,0 +1,91 @@
+default_install_hook_types: [pre-commit, pre-push, commit-msg]
+repos:
+  - repo: https://github.com/Levia-Labs/Crepidoma
+    rev: v0.4.2
+    hooks:
+      - id: crepidoma-scrub
+      - id: crepidoma-scrub-msg
+      - id: crepidoma-long-files
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1
+    hooks:
+      - id: ruff
+        args: [--config, .crepidoma/configs/ruff.toml]
+      - id: ruff-format
+        args: [--config, .crepidoma/configs/ruff.toml]
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+        args: [--config, .crepidoma/configs/gitleaks.toml]
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+        args: [-c, .crepidoma/configs/.yamllint]
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1-1
+    hooks:
+      - id: shellcheck
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.9.10
+    hooks:
+      - id: prettier
+        args: [--config, .crepidoma/configs/.prettierrc]
+        stages: [pre-commit, pre-push]
+  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
+    rev: v1.7.12.25
+    hooks:
+      - id: actionlint
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v1.31.1
+    hooks:
+      - id: zizmor
+        args: [--config, .crepidoma/configs/zizmor.yml]
+  # rev not pinned in Crepidoma's own config; confirm with `pre-commit autoupdate`.
+  - repo: https://github.com/AleksaC/hadolint-py
+    rev: v2.12.0.3
+    hooks:
+      - id: hadolint
+        args: [--config, .crepidoma/configs/.hadolint.yaml]
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (shared config)
+        entry: npx --no eslint --config .crepidoma/configs/eslint.config.js
+        language: system
+        types_or: [javascript, ts, tsx, jsx]
+      - id: ast-grep
+        name: ast-grep scan (shared rules)
+        entry: ast-grep scan --config .crepidoma/configs/sgconfig.yml
+        language: python
+        additional_dependencies: [ast-grep-cli==0.51.0]
+        pass_filenames: false
+      - id: gofmt
+        name: gofmt
+        entry: gofmt -l -w
+        language: system
+        types: [go]
+      - id: go-check
+        name: go vet and go test
+        entry: task go:check
+        language: system
+        types: [go]
+        pass_filenames: false
+# semgrep and osv-scanner run in CI (see Crepidoma .github/workflows/validate.yml).

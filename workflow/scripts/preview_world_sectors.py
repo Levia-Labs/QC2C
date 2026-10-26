@@ -23,7 +23,7 @@ if __name__ == '__main__':
             countries = json.load(gz_file)
     else:
         with open(path.join(source_directory, f'../data/output/stage_{stage}', f'world_sector_{sector}.json'),
-                  'r') as file:
+                  'r', encoding='utf-8') as file:
             countries = json.load(file)
 
     # Create a GeoDataFrame with the polygons

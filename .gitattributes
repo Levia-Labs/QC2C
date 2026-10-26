@@ -1,0 +1,33 @@
+# Line endings are not a style question. A CRLF that reaches a shell script or a heredoc
+# inside a Taskfile breaks it on the target machine with an error that names the wrong line.
+# Text is checked out and committed with LF on every platform, regardless of core.autocrlf.
+
+* text=auto eol=lf
+
+# Explicit, so a future addition does not depend on git's content heuristic getting it right.
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.py    text eol=lf
+*.sh    text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.json  text eol=lf
+*.toml  text eol=lf
+*.cfg   text eol=lf
+*.conf  text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+
+# Windows scripts need CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary. Never touched, never diffed as text.
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
+*.zip   binary
+*.svg   binary

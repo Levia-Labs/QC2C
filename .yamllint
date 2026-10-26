@@ -1,0 +1,33 @@
+extends: default
+
+ignore: |
+  node_modules/
+  .venv/
+  dist/
+  build/
+
+rules:
+  line-length:
+    max: 120
+    ignore: |
+      ast-grep/rules/
+      configs/ast-grep/rules/
+      semgrep/
+      configs/semgrep/
+  document-start: disable
+  comments-indentation: disable
+  quoted-strings: disable
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  comments:
+    min-spaces-from-content: 1

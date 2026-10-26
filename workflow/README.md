@@ -1,70 +1,37 @@
-# Quick Coordinates To Country - QC2C
+# Workflow
 
-Quick Coordinates To Country (QC2C) provides fast and (mostly) offline country check,
-based on provided coordinates.
+Data pipeline that turns raw country borders into the compact sector files shipped by the [Python](../packages/python/README.md) and [TypeScript](../packages/typescript/README.md) packages.
 
-## About
+## Stages
 
-This project aims at creation of standard,
-approximate offline check whether coordinates are within countries borders
-and return country code in ISO Alpha 3.
+Each stage reads the previous stage's output from [data/output](data/output) and writes its own folder.
 
-Approximate borders were created in `main.py` with:
+| Stage | Status | What it does |
+| --- | --- | --- |
+| [1](scripts/stage_1/README.md) | done | Builds the base map, simplifies each country with convex hull and `simplify`, merges non-intersecting countries and splits the world into sectors. |
+| [2](scripts/stage_2/README.md) | done | Removes border points that change neither area nor intersections. |
+| [3](scripts/stage_3/README.md) | done | Minifies the JSON to ASCII and gzips it. |
+| [4](scripts/stage_4/README.md) | done | Adds each country's center to the sector manifest. |
+| [5](scripts/stage_5/README.md) | planned | Merges self-overlapping polygons within each country. |
+| [6](scripts/stage_6/README.md) | planned | Simplifies with Voronoi diagrams so every piece of land belongs to a country. |
 
-- convex hull of a country
-- `geometry.simplify` to reduce amount of points
-- multiple iterations to remove unnecessary border points with smoothed curves
+Stages 3 and later produce `.json.gz` files. Gzip was chosen because browsers decompress it natively; Brotli might be smaller but is less widely supported for this use.
 
-## Compression
+## Run
 
-Results were compressed with `gzip` to reduce files size and make them accessible for `javascript` applications,
-as browsers have native support for this compression algorithm.
+Inputs live in [data/input](data/input): `countries.json`, `us_states.json` and the `world_sectors.json` manifest. Stage scripts need `shapely` and `tqdm`; the preview also needs `geopandas` and `matplotlib`.
 
-It is possible that other compression algorithms (such as `Brotli`) would provide smaller size,
-but they are not standard yet.
+```bash
+python workflow/scripts/stage_1/main.py
+python workflow/scripts/preview_world_sectors.py  # optional: check the sector map for artifacts
+```
 
-## How to use
-
-1. host world + sectors manifests on the web or add them to your project
-2. Check which sector contains coordinates data
-3. Check which country from sector contains coordinates
-
-Example scripts are provided in **example_use** folder.
-
-### How to generate files
-
-1. provide `countries.json`
-2. provide `us_states.json`
-3. provide `world_sectors.json` manifest
-4. run `main.py` to generate `world_sectors_x.json` from provided files
-
-    > 2023.12.24: Stage 1 current total runtime: ~900 seconds
-
-5. _Optional_: run `preview_world_sectors.py` to check sector map for artifacts
-
-> stages 3+ produce `.json.gz` files!
-
-## Politics
-
-1. This project is NOT a political matter
-2. We do NOT move borders or decide which land belongs to whom
-3. _QC2C_ is **offline approximation** and **WORKS ONLY ON LAND - sea borders are not supported!**
-4. If you do not agree with provided borders, don't use it! Make your own or something.
-5. Keep your political views out of discussions, commits and merge requests.
+Stage 1 took about 900 seconds on 2023-12-24.
 
 ## Roadmap
 
-1. ~~**Shore Line Reduction**: sea borders can be greatly reduced,
-but this requires iteration through points; **coming in stage 2**~~
+1. Represent islands as rectangles or triangles when they intersect nothing else, and straighten shore lines.
+2. Use Voronoi diagrams to build separation regions between countries (stage 6).
+3. Verify output against input: every coordinate assigned to a country in the input must map to the same country in the output. Build the test set from tricky pairs (enclaves, irregular borders) and from a grid of land points.
 
-2. **Rectangularization x Triangulation** - islands can be represented as squares or triangles,
-if they would not intersect with anything else.
-Shore lines can also be represented as straight line (union of original polygon and rectangle)
-3. **Voronoi Diagram** - Voronoi diagram allows to easily create _separation regions_, but it works for points only.
-Maybe it could be used for polygons too? ; **coming in stage 3**
-4. **Tests**:
-   0. **Verify output against input data - all coordinates assigned to input coutry should be part of it in output!**
-   1. set of pairs `(coordinates, country_code)` that generated output should match;
-   2. The trickier the pairs (e.g. regions with mixed spots or irregular borders), the better testing set;
-   3. Basic testing would be to generate a net of points created from data_input, covering all land with assigned country code,
-   but this testing would force specific accuracy (border irregularities beyond net width won't be detected)
+Done: shore line reduction (stage 2).

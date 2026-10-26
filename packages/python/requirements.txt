@@ -1,8 +1,0 @@
-# No external dependencies required
-# Built-in Python only
-
-# for deployment
-build
-setuptools
-wheel
-twine

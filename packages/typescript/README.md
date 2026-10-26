@@ -1,70 +1,58 @@
-# Quick Coordinates To Country - QC2C
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Levia-Labs/QC2C/main/assets/logo.svg" alt="QC2C, Quick Coordinates To Country" width="360">
+</p>
 
-Quick Coordinates To Country (QC2C) provides fast and (mostly) offline country check,
-based on provided coordinates.
+# qc2c for JavaScript and TypeScript
 
-## About
+Offline lookup from latitude and longitude to an ISO 3166-1 alpha-3 country code. Ships with type declarations and the border data as JSON.
 
-This project aims at creation of standard,
-approximate offline check whether coordinates are within countries borders
-and return country code in ISO Alpha 3.
+## Install
 
-Approximate borders were created in `main.py` with:
+```bash
+npm install qc2c
+```
 
-- convex hull of a country
-- `geometry.simplify` to reduce amount of points
-- multiple iterations to remove unnecessary border points with smoothed curves
+## Use in Node or a bundler
 
-## Compression
+```ts
+import { getSector, getCountry } from "qc2c";
+import manifest from "qc2c/dist/data/json/world_sectors.json";
 
-Results were compressed with `gzip` to reduce files size and make them accessible for `javascript` applications,
-as browsers have native support for this compression algorithm.
+const point = { lat: 52.23, lng: 21.01 };
+const sectorKey = getSector(manifest, point);           // "world_sector_2.json.gz"
+const file = sectorKey!.replace(/\.gz$/, "");            // sector keys name the gzipped files
+const sector = await import(`qc2c/dist/data/json/${file}`);
+getCountry(sector.default ?? sector, point);             // "POL"
+```
 
-It is possible that other compression algorithms (such as `Brotli`) would provide smaller size,
-but they are not standard yet.
+## Use in the browser
 
-## How to use
+Host the gzipped sector files from the [repository](https://github.com/Levia-Labs/QC2C/tree/main/packages/typescript/src/data/gz), served with `Content-Encoding: gzip` so the browser decompresses them, then:
 
-1. host world + sectors manifests on the web or add them to your project
-2. Check which sector contains coordinates data
-3. Check which country from sector contains coordinates
+```ts
+import { coordinatesToCountry } from "qc2c";
 
-Example scripts are provided in **example_use** folder.
+const code = await coordinatesToCountry(
+  { lat: 52.23, lng: 21.01 },
+  { manifest: "/qc2c/world_sectors.json.gz", sectors: "/qc2c" },
+);
+// "POL"
+```
 
-### How to generate files
+## API
 
-1. provide `countries.json`
-2. provide `us_states.json`
-3. provide `world_sectors.json` manifest
-4. run `main.py` to generate `world_sectors_x.json` from provided files
+| Function | Returns |
+| --- | --- |
+| `coordinatesToCountry(coordinates, urls)` | Fetches the manifest and one sector file, then returns the country code or `null`. |
+| `getSector(manifest, coordinates)` | Key of the first sector whose bounding box contains the point, or `null`. |
+| `getCountry(sector, coordinates)` | Key of the first country polygon in the sector that contains the point, or `null`. |
 
-    > 2023.12.24: Stage 1 current total runtime: ~900 seconds
+`coordinates` is `{ lat, lng }` in decimal degrees.
 
-5. _Optional_: run `preview_world_sectors.py` to check sector map for artifacts
+## Notes
 
-> stages 3+ produce `.json.gz` files!
+1. Borders are approximate and cover land only; there are no maritime borders.
+2. The United States is split into states, so US points return the state code, for example `"NY"`.
+3. Data and algorithm match the [PyPI package](https://pypi.org/project/qc2c/).
 
-## Politics
-
-1. This project is NOT a political matter
-2. We do NOT move borders or decide which land belongs to whom
-3. _QC2C_ is **offline approximation** and **WORKS ONLY ON LAND - sea borders are not supported!**
-4. If you do not agree with provided borders, don't use it! Make your own or something.
-5. Keep your political views out of discussions, commits and merge requests.
-
-## Roadmap
-
-1. ~~**Shore Line Reduction**: sea borders can be greatly reduced,
-but this requires iteration through points; **coming in stage 2**~~
-
-2. **Rectangularization x Triangulation** - islands can be represented as squares or triangles,
-if they would not intersect with anything else.
-Shore lines can also be represented as straight line (union of original polygon and rectangle)
-3. **Voronoi Diagram** - Voronoi diagram allows to easily create _separation regions_, but it works for points only.
-Maybe it could be used for polygons too? ; **coming in stage 3**
-4. **Tests**:
-   0. **Verify output against input data - all coordinates assigned to input coutry should be part of it in output!**
-   1. set of pairs `(coordinates, country_code)` that generated output should match;
-   2. The trickier the pairs (e.g. regions with mixed spots or irregular borders), the better testing set;
-   3. Basic testing would be to generate a net of points created from data_input, covering all land with assigned country code,
-   but this testing would force specific accuracy (border irregularities beyond net width won't be detected)
+Source, data pipeline and issues: [github.com/Levia-Labs/QC2C](https://github.com/Levia-Labs/QC2C). MIT licensed.

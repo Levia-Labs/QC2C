@@ -1,0 +1,82 @@
+{
+  "model": "claude-opus-5-5",
+  "subagentPromptCacheTtl": "1h",
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
+    "CREPIDOMA_POOL_TTL": "1800"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(task *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git rev-parse *)",
+      "Bash(git ls-files *)",
+      "Bash(git blame *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(graphify *)",
+      "Bash(ruff *)",
+      "Bash(yamllint *)",
+      "Bash(pre-commit run *)",
+      "Bash(claude --version)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(ls *)",
+      "Bash(diff *)",
+      "Bash(dirname *)",
+      "Bash(basename *)",
+      "Bash(echo *)",
+      "Bash(test *)",
+      "Bash(grep *)",
+      "Bash(tr *)",
+      "Bash(jq *)",
+      "Bash(command -v *)",
+      "Bash(which *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "PowerShell",
+      "ShareOnboardingGuide",
+      "ListAgents",
+      "Bash(sudo *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "Bash(git diff *--output*)",
+      "Bash(git diff *--ext-diff*)",
+      "Bash(git log *--output*)",
+      "Bash(git log *--ext-diff*)",
+      "Bash(git show *--output*)",
+      "Bash(git show *--ext-diff*)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "levia-labs": {
+      "source": {
+        "source": "github",
+        "repo": "Levia-Labs/Crepidoma",
+        "ref": "main"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman",
+        "ref": "v4.0.1"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "crepidoma@levia-labs": true,
+    "superpowers@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "caveman@caveman": true
+  }
+}
