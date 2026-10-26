@@ -1,6 +1,6 @@
 # Output
 
-- Outputs of each pipeline stage.
+- Build results written by qc2c-build; only the folder .gitignore is tracked.
 
 ## Contents
 

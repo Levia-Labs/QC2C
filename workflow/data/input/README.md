@@ -1,6 +1,6 @@
 # Input
 
-- Raw inputs: country borders, US states and the sector manifest.
+- Source borders, code overrides and the sector manifest read by qc2c-build.
 
 ## Contents
 

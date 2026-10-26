@@ -19,7 +19,7 @@ from qc2c import coordinates_to_country
 
 coordinates_to_country({"lat": 52.23, "lng": 21.01})    # "POL"
 coordinates_to_country({"lat": 35.68, "lng": 139.69})   # "JPN"
-coordinates_to_country({"lat": 0.0, "lng": -140.0})     # None, open ocean
+coordinates_to_country({"lat": 0.0, "lng": -140.0})     # "PYF", nearest country for open ocean
 ```
 
 To use your own copy of the data, call the steps directly:
@@ -44,8 +44,9 @@ code = get_country(sectors[sector_key], {"lat": 52.23, "lng": 21.01})
 
 ## Notes
 
-1. Borders are approximate and cover land only; there are no maritime borders.
-2. The United States is split into states, so US points return the state code, for example `"NY"`.
+1. Borders are approximate and can be wrong close to a border.
+2. Points at sea return the nearest country, and United States points return `USA`.
 3. Data and algorithm match the [npm package](https://www.npmjs.com/package/qc2c).
+4. The data is built and validated by the [workflow](https://github.com/Levia-Labs/QC2C/tree/main/workflow).
 
 Source, data pipeline and issues: [github.com/Levia-Labs/QC2C](https://github.com/Levia-Labs/QC2C). MIT licensed.
