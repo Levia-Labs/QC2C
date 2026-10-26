@@ -36,6 +36,9 @@
 "workflow/data/output/stage_4" = "Stage 4 output: manifest enriched with country centers."
 "workflow/scripts" = "Pipeline stage scripts and the sector preview tool."
 "workflow/test" = "Checks for pipeline output."
+"workflow/src" = "Source root of the qc2c-build uv project."
+"workflow/src/qc2c_build" = "The qc2c_build package: settings and the sector data build pipeline."
+"workflow/tests" = "Pytest suite and shared synthetic world for the qc2c-build pipeline."
 
 [files]
 "folder-purposes.toml" = "Folder and file purposes for the generated README contents lists."

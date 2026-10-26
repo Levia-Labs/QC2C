@@ -51,7 +51,7 @@ The old `workflow/scripts/`, `workflow/test/` and `workflow/data/output/stage_1.
 1. `load`: `countries.json` (and `us_states.json` with `--us-states`) to a list of `(code, geometry)`.
 2. `partition`: land coverage to a full-plane coverage in which every country owns its land plus its nearest sea.
 3. `simplify`: shared borders simplified once, so neighbors never gap or overlap.
-4. `sectors`: per-sector dictionaries of code to rings.
+4. `sectors`: per-sector dictionaries of code to rings. Polygons with holes are cut into hole-free pieces, so first-match lookup is exact in any order.
 5. `write`: `workflow/data/output/<name>/` (default `latest`) containing `world_sectors.json`, `world_sectors.json.gz`, `world_sector_N.json`, `world_sector_N.json.gz`, `build.json`.
 6. `validate`: reads the output and the source, writes `validation.json` and `fixtures/points.json` into the same folder.
 7. `publish`: copies JSON and gzip files into `packages/python/qc2c/data/{json,gz}` and `packages/typescript/src/data/{json,gz}`, and the fixture into `packages/fixtures/points.json`.
@@ -112,10 +112,10 @@ The same settings are keys in `workflow/qc2c.toml` and `QC2C_<UPPER_NAME>` envir
 
 Point set: every vertex of every source polygon, plus `--samples` seeded random interior points per country so microstates are always covered.
 
-Each point is classified by its distance `d` from the nearest boundary between two different codes in the source coverage after overrides:
+Each point is classified by its distance `d` to the nearest source geometry of a *different* code (source coverage after overrides):
 
 1. "Ambiguous" when `d < 1e-9`: the point lies on a shared border and belongs to both codes. Not scored.
-2. "Core" when `d` exceeds the band `presimplify + tolerance + 10^-decimals + 0.001` (the last term is the Voronoi snapping tolerance).
+2. "Core" when `d` exceeds `2 * (presimplify + tolerance + 10^-decimals + 0.001) + voronoi_spacing / 2`. The doubling and the spacing term cover sea that the Voronoi step can hand to a neighbour within one boundary spacing.
 3. "Border band" otherwise.
 
 Hard checks, any failure exits non-zero:
@@ -155,8 +155,8 @@ Services set `user: "${UID:-1000}:${GID:-1000}"` so Linux hosts get files they o
 | `task workflow:validate -- <flags>` | `docker compose run --rm validate validate <flags>` |
 | `task workflow:publish` | `publish`, then `test-node` to rebuild `dist` |
 | `task workflow:preview` | `preview` |
-| `task workflow:check` | build into a temporary output name and compare its files with the published package data |
-| `task test` | `test-pipeline`, `test-python` and `test-node` in parallel; fails if any fails |
+| `task workflow:check` | compare the latest build with the published package data |
+| `task workflow:test` | `test-pipeline`, `test-python` and `test-node` in parallel; fails if any fails |
 
 ## Testing
 
