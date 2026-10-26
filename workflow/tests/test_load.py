@@ -75,3 +75,11 @@ def test_invalid_geometry_is_repaired(world):
 def test_loaded_features_form_a_coverage(world):
     result = load_features(world)
     assert shapely.coverage_is_valid([g for _, g in result])
+
+
+def test_coordinates_stay_in_world(world):
+    drift = [feature("EDG", "Edge", [square(170, 50, 180.0000000000002, 60)])]
+    write_inputs(world.input_dir, WORLD_FEATURES + drift, overrides={"Nowhere": "NWH"})
+    for _, geom in load_features(world):
+        min_x, min_y, max_x, max_y = geom.bounds
+        assert -180 <= min_x and max_x <= 180 and -90 <= min_y and max_y <= 90

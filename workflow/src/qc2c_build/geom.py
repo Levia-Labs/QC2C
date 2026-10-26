@@ -1,6 +1,7 @@
 """Polygon helpers shared by the build stages."""
 from __future__ import annotations
 
+import numpy as np
 import shapely
 from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
@@ -27,6 +28,16 @@ def polygonal(geom: BaseGeometry | None) -> BaseGeometry:
     if not polygons:
         return EMPTY
     return polygons[0] if len(polygons) == 1 else shapely.union_all(polygons)
+
+
+def clamp_to_world(geom: BaseGeometry) -> BaseGeometry:
+    """Pull coordinates onto lng [-180, 180], lat [-90, 90].
+
+    Source borders carry vertices such as 180.0000000000002 on the antimeridian;
+    they fall outside every sector box and would match no ring.
+    """
+    clamped = shapely.transform(geom, lambda xy: np.clip(xy, (-180.0, -90.0), (180.0, 90.0)))
+    return polygonal(clamped)
 
 
 def hole_free(geom: BaseGeometry) -> list[Polygon]:

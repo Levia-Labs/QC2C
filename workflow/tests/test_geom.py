@@ -3,7 +3,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 from shapely.geometry import LineString, Polygon, box
 
-from qc2c_build.geom import hole_free, make_coverage, polygonal
+from qc2c_build.geom import clamp_to_world, hole_free, make_coverage, polygonal
 
 
 def test_polygonal_drops_lines_and_repairs():
@@ -40,3 +40,14 @@ def test_make_coverage_nodes_shared_edges():
     assert [c for c, _ in result] == ["L", "R"]
     assert shapely.coverage_is_valid([g for _, g in result])
     assert abs(sum(g.area for _, g in result) - 4) < 1e-6
+
+
+@given(st.floats(-181, 181), st.floats(-91, 91), st.floats(0.01, 5))
+def test_clamp_to_world_stays_inside(x, y, size):
+    clamped = clamp_to_world(box(x, y, x + size, y + size))
+    if not clamped.is_empty:
+        min_x, min_y, max_x, max_y = clamped.bounds
+        assert -180 <= min_x and max_x <= 180 and -90 <= min_y and max_y <= 90
+    width = max(0.0, min(x + size, 180) - max(x, -180))
+    height = max(0.0, min(y + size, 90) - max(y, -90))
+    assert abs(clamped.area - width * height) < 1e-6

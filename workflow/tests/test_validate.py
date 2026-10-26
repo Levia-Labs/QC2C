@@ -2,11 +2,12 @@ import json
 from dataclasses import replace
 
 import numpy as np
+from conftest import WORLD_FEATURES, feature, square, write_inputs
 
 from qc2c_build.load import load_features
 from qc2c_build.pipeline import run_build
 from qc2c_build.sectors import read_sectors
-from qc2c_build.validate import PointSet, classify, fixture, run_validation, source_points
+from qc2c_build.validate import PointSet, load_output, lookup, classify, fixture, run_validation, source_points
 
 
 def test_classify_border_core_ambiguous(world):
@@ -58,3 +59,18 @@ def test_fixture_avoids_sector_edges(world):
     kind = classify(points, features, 0.5)
     chosen = fixture(points, kind, sectors, 1)
     assert all(p["lat"] != 0.0 for p in chosen)
+
+
+def test_world_edge_vertices_resolve(world):
+    # Real borders carry 180.0000000000002 on the antimeridian; every such vertex must resolve.
+    edge = [feature("EDG", "Edge", [square(170, 50, 180.0000000000002, 60)]),
+            feature("TRI", "Tri", [[[175, -60], [180.0000000000002, -55], [175, -50], [175, -60]]])]
+    write_inputs(world.input_dir, WORLD_FEATURES + edge, overrides={"Nowhere": "NWH"})
+    run_build(world)
+    report = run_validation(world)
+    assert report["passed"], report["failures"]
+    manifest, sector_files = load_output(world.build_dir)
+    xy = np.array([[180.0, 50.0], [180.0, 60.0], [180.0, -55.0], [-180.0, 0.0], [180.0, 90.0], [0.0, -90.0]])
+    found = lookup(manifest, sector_files, xy).tolist()
+    assert None not in found
+    assert found[2] == "TRI"

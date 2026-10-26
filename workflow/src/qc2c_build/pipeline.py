@@ -37,7 +37,7 @@ def run_build(cfg: BuildConfig) -> dict:
     mark("load")
     parts = build_partition(features, cfg)
     mark("partition")
-    simplified = simplify_partition(parts, cfg)
+    simplified = simplify_partition(parts, features, cfg)
     mark("simplify")
     files, manifest = split_into_sectors(simplified, features, sectors, cfg.decimals)
     mark("sectors")

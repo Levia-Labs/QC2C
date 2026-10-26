@@ -1,5 +1,5 @@
 import shapely
-from shapely.geometry import Polygon, box
+from shapely.geometry import LineString, Polygon, box
 
 from qc2c_build.geom import EMPTY
 from qc2c_build.load import load_features
@@ -18,7 +18,8 @@ def assert_on_grid(parts, grid):
 
 
 def test_coordinates_on_grid_and_no_overlap(world):
-    parts = simplify_partition(build_partition(load_features(world), world), world)
+    features = load_features(world)
+    parts = simplify_partition(build_partition(features, world), features, world)
     assert_on_grid(parts, 0.001)
     total = sum(g.area for _, g in parts)
     assert abs(total - 360 * 180) < 1e-3
@@ -46,3 +47,44 @@ def test_restore_lost_keeps_valid_coverage():
     assert abs(dict(restored)["TNY"].area - tiny.area) < 1e-9
     union = shapely.union_all([g for _, g in restored])
     assert abs(union.area - 100) < 1e-9
+
+
+def test_restore_lost_uses_land_not_partition_area():
+    # The host swallowed the microstate's land; the microstate keeps only sea,
+    # which alone is far above half of its partition area.
+    land_host = box(0, 0, 10, 10).difference(box(4, 4, 4.01, 4.01))
+    land_micro = box(4, 4, 4.01, 4.01)
+    sea_micro = box(4.01, 4, 4.5, 4.01)
+    simplified = [("HST", box(0, 0, 10, 10).difference(sea_micro)), ("MIC", sea_micro)]
+    restored = dict(restore_lost([("HST", land_host), ("MIC", land_micro)], simplified, grid=0.001))
+    assert restored["MIC"].contains(land_micro.buffer(-1e-6))
+    assert restored["MIC"].intersects(sea_micro.buffer(-1e-6))  # sea kept
+    assert restored["HST"].intersection(land_micro).area < 1e-9
+    assert shapely.coverage_is_valid([restored["HST"], restored["MIC"]])
+    assert abs(sum(g.area for g in restored.values()) - 100) < 1e-9
+
+
+def test_restore_lost_leaves_intact_land_alone():
+    land = [("A", box(0, 0, 5, 10)), ("B", box(5, 0, 10, 10))]
+    simplified = [("A", box(0, 0, 5.2, 10)), ("B", box(5.2, 0, 10, 10))]
+    assert restore_lost(land, simplified, grid=0.001) == simplified
+
+
+def test_world_edges_covered_after_simplify(world):
+    features = load_features(world)
+    parts = simplify_partition(build_partition(features, world), features, world)
+    union = shapely.union_all([g for _, g in parts])
+    for line in ([(-180, -90), (180, -90)], [(-180, 90), (180, 90)],
+                 [(-180, -90), (-180, 90)], [(180, -90), (180, 90)]):
+        assert LineString(line).difference(union).length == 0
+
+
+def test_restore_lost_covers_land_smaller_than_a_cell():
+    # One grid cell holds less than 70% of this land when snapped to the nearest vertices.
+    land = box(10.0004, 20.0004, 10.0014, 20.0014)
+    host = box(0, 0, 30, 30).difference(land)
+    restored = dict(restore_lost([("HST", host), ("MIC", land)],
+                                 [("HST", box(0, 0, 30, 30)), ("MIC", EMPTY)], grid=0.001))
+    assert restored["MIC"].intersection(land).area >= 0.9 * land.area
+    assert shapely.coverage_is_valid([g for g in restored.values()])
+    assert_on_grid(list(restored.items()), 0.001)

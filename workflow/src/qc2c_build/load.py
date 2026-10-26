@@ -10,7 +10,7 @@ from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
 from .config import BuildConfig, ConfigError
-from .geom import make_coverage, polygonal
+from .geom import clamp_to_world, make_coverage, polygonal
 
 NO_CODE = "-99"
 # State-file entries that duplicate an ISO country entry in countries.json.
@@ -45,7 +45,7 @@ def load_features(cfg: BuildConfig) -> list[Feature]:
         code = resolve_code(item["properties"], overrides)
         if cfg.us_states and code == "USA":
             continue
-        grouped[code].append(polygonal(shape(item["geometry"])))
+        grouped[code].append(polygonal(clamp_to_world(shape(item["geometry"]))))
     if cfg.us_states:
         for item in read_json(cfg.input_file("us_states.json"))["features"]:
             code = item["properties"].get("ISO_A3")
@@ -53,7 +53,7 @@ def load_features(cfg: BuildConfig) -> list[Feature]:
                 name = item["properties"].get("ADMIN", "")
                 raise ConfigError(f"state feature {name!r} has no ISO_A3")
             if code not in US_TERRITORIES:
-                grouped[code].append(polygonal(shape(item["geometry"])))
+                grouped[code].append(polygonal(clamp_to_world(shape(item["geometry"]))))
     features = [(code, polygonal(shapely.union_all(grouped[code]))) for code in sorted(grouped)]
     return _remove_overlaps([(code, geom) for code, geom in features if not geom.is_empty])
 
