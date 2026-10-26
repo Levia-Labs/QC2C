@@ -6,6 +6,6 @@
 
 <!-- contents:start -->
 
-- [`2026-10-26-generation-pipeline.md`](2026-10-26-generation-pipeline.md) - Generation Pipeline Rebuild Implementation Plan
+- [`2026-10-26-generation-pipeline/`](2026-10-26-generation-pipeline/README.md) - Generation pipeline rebuild plan: overview first, then one file per task.
 
 <!-- contents:end -->
