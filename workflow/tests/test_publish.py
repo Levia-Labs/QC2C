@@ -179,3 +179,10 @@ def test_publish_failure_midway_keeps_previous_files(world, monkeypatch, fail_on
     after = {p: p.read_bytes() for p in [*world.packages_dir.rglob("*"), *world.web_dir.rglob("*")] if p.is_file()}
     assert after == before
     assert not [p for p in after if p.name.endswith(".tmp")]
+
+
+def test_compare_requires_preview_in_build(world):
+    _published(world)
+    (world.build_dir / "preview.png").unlink()
+    assert "web/preview.png" in compare(world)
+    assert compare(world).count("web/preview.png") == 1

@@ -164,10 +164,10 @@ def publish(cfg: BuildConfig) -> list[Path]:
 def compare(cfg: BuildConfig) -> list[str]:
     """Package and web paths whose bytes differ from the build, plus shipped files the build lacks."""
     planned = _planned(cfg)
-    # a build without a preview says nothing about web/preview.png
-    web_known = (cfg.build_dir / "preview.png").is_file()
     planned += _web_labelled(cfg)
     diffs = []
+    if not (cfg.build_dir / "preview.png").is_file():  # the shipped preview must match a rendered one
+        diffs.append(f"{WEB}/preview.png")
     for content, destination, label in planned:
         expected = content if isinstance(content, bytes) else content.read_bytes()
         if not destination.is_file() or destination.read_bytes() != expected:
@@ -176,8 +176,6 @@ def compare(cfg: BuildConfig) -> list[str]:
     for old in _stale_files(cfg, {destination for _, destination, _ in planned}):
         label = (f"{WEB}/{old.name}" if old.parent == cfg.web_dir
                  else old.relative_to(cfg.packages_dir).as_posix())
-        if label == f"{WEB}/preview.png" and not web_known:
-            continue
         if label not in expected_labels:
             diffs.append(label)
-    return sorted(diffs)
+    return sorted(set(diffs))
