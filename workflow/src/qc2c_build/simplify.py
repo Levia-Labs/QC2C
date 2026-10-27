@@ -27,12 +27,17 @@ def overlap_area(a: BaseGeometry, b: BaseGeometry) -> float:
     """Exact intersection area. Overlay results inherit the fixed precision of
     geometries from set_precision, which would round the overlap onto the grid;
     grid size 0 drops that precision model first."""
-    return shapely.intersection(shapely.set_precision(a, 0), shapely.set_precision(b, 0)).area
+    return shapely.intersection(exact(a), exact(b)).area
+
+
+def exact(geom: BaseGeometry) -> BaseGeometry:
+    """`geom` without the fixed precision model, so overlay results are not rounded onto the grid."""
+    return shapely.set_precision(geom, 0)
 
 
 def snapped_land(geom: BaseGeometry, grid: float, keep: float) -> BaseGeometry:
     """`geom` on the grid. Snapping a land smaller than a few cells can drop most of it,
-    so then every grid cell that touches the land is used instead."""
+    so then every grid cell that shares area with the land is used instead."""
     patch = polygonal(shapely.set_precision(geom, grid))
     if overlap_area(patch, geom) >= keep * geom.area:
         return patch
@@ -42,9 +47,11 @@ def snapped_land(geom: BaseGeometry, grid: float, keep: float) -> BaseGeometry:
     if len(xs) * len(ys) > 10_000:
         return patch  # not a microstate; the snapped land is what there is
     cells = shapely.box(*np.meshgrid(xs, ys), *np.meshgrid(xs + grid, ys + grid))
-    touching = shapely.intersects(cells, geom).ravel()
-    cover = polygonal(shapely.set_precision(shapely.union_all(cells.ravel()[touching]), grid))
-    return cover if not cover.is_empty else geom
+    areas = shapely.area(shapely.intersection(cells, geom)).ravel()
+    # Cells that merely touch the land (or share float noise with it) would add area it does not have.
+    touching = areas > 1e-9 * grid * grid
+    touching[areas.argmax()] = True  # float noise can zero every area of a degenerate land
+    return polygonal(shapely.set_precision(shapely.union_all(cells.ravel()[touching]), grid))
 
 
 def restore_lost(land: list[Feature], simplified: list[Feature], grid: float,
@@ -59,7 +66,7 @@ def restore_lost(land: list[Feature], simplified: list[Feature], grid: float,
     """
     result = list(simplified)
     index_of = {code: index for index, (code, _) in enumerate(result)}
-    restored = False
+    restored: dict[str, BaseGeometry] = {}  # code -> source land of codes already put back
     for code, geom in land:
         if geom.is_empty:
             continue
@@ -69,16 +76,23 @@ def restore_lost(land: list[Feature], simplified: list[Feature], grid: float,
             continue
         patch = snapped_land(geom, grid, keep)
         for other, (other_code, other_geom) in enumerate(result):
-            if other_code != code and other_geom.intersects(patch):
-                result[other] = (other_code, polygonal(
-                    shapely.set_precision(other_geom.difference(patch), grid)))
+            if other_code == code or not other_geom.intersects(patch):
+                continue
+            # A code restored earlier keeps its own land, which is off the grid; only the rest is cut from it.
+            if other_code in restored:
+                cut = exact(patch).difference(restored[other_code])
+                result[other] = (other_code, polygonal(exact(other_geom).difference(cut)))
+            else:
+                result[other] = (other_code, polygonal(shapely.set_precision(other_geom.difference(patch), grid)))
         merged = polygonal(shapely.union(current, patch))
+        for other_code, other_land in restored.items():
+            merged = polygonal(exact(merged).difference(other_land))
         if index is None:
             index_of[code] = len(result)
             result.append((code, merged))
         else:
             result[index] = (code, merged)
-        restored = True
+        restored[code] = geom
     kept = [(code, geom) for code, geom in result if not geom.is_empty]
     # Cutting snapped neighbours leaves slivers; re-noding keeps the coverage valid.
     return make_coverage(kept) if restored else kept

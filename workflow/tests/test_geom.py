@@ -1,8 +1,10 @@
+import pytest
 import shapely
 from hypothesis import given
 from hypothesis import strategies as st
 from shapely.geometry import LineString, Polygon, box
 
+from qc2c_build.config import ConfigError
 from qc2c_build.geom import clamp_to_world, hole_free, make_coverage, polygonal
 
 
@@ -43,7 +45,12 @@ def test_make_coverage_nodes_shared_edges():
 
 
 @given(st.floats(-181, 181), st.floats(-91, 91), st.floats(0.01, 5))
-def test_clamp_to_world_stays_inside(x, y, size):
+def test_clamp_to_world_stays_inside_or_raises(x, y, size):
+    overshoot = max(x + size - 180, -180 - x, y + size - 90, -90 - y)
+    if overshoot > 1e-6:
+        with pytest.raises(ConfigError):
+            clamp_to_world(box(x, y, x + size, y + size))
+        return
     clamped = clamp_to_world(box(x, y, x + size, y + size))
     if not clamped.is_empty:
         min_x, min_y, max_x, max_y = clamped.bounds
@@ -51,3 +58,20 @@ def test_clamp_to_world_stays_inside(x, y, size):
     width = max(0.0, min(x + size, 180) - max(x, -180))
     height = max(0.0, min(y + size, 90) - max(y, -90))
     assert abs(clamped.area - width * height) < 1e-6
+
+
+def test_clamp_to_world_pulls_edge_drift_back():
+    clamped = clamp_to_world(box(170, 50, 180.0000000002, 60))
+    assert clamped.bounds == (170.0, 50.0, 180.0, 60.0)
+
+
+@pytest.mark.parametrize("shape", [box(170, 50, 180.001, 60), box(-181, 0, -170, 10), box(0, 80, 10, 91),
+                                   box(0, -95, 10, -80)])
+def test_clamp_to_world_rejects_far_outside_coordinates(shape):
+    with pytest.raises(ConfigError, match="outside the world"):
+        clamp_to_world(shape)
+
+
+def test_make_coverage_names_vanished_codes():
+    with pytest.raises(ConfigError, match="BBB"):
+        make_coverage([("AAA", box(0, 0, 2, 2)), ("BBB", box(0.5, 0.5, 1.5, 1.5))])

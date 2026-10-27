@@ -7,7 +7,10 @@ from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import split
 
+from .config import ConfigError
+
 EMPTY = MultiPolygon()
+EDGE_TOLERANCE = 1e-6  # how far past the world edge a source vertex may drift and still be pulled back
 
 
 def _polygons(geom: BaseGeometry) -> list[Polygon]:
@@ -31,13 +34,23 @@ def polygonal(geom: BaseGeometry | None) -> BaseGeometry:
 
 
 def clamp_to_world(geom: BaseGeometry) -> BaseGeometry:
-    """Pull coordinates onto lng [-180, 180], lat [-90, 90].
+    """Pull coordinates within EDGE_TOLERANCE of the world edge onto lng [-180, 180], lat [-90, 90].
 
     Source borders carry vertices such as 180.0000000000002 on the antimeridian;
-    they fall outside every sector box and would match no ring.
+    they fall outside every sector box and would match no ring. Coordinates
+    farther out are bad data, not drift, and raise ConfigError.
     """
-    clamped = shapely.transform(geom, lambda xy: np.clip(xy, (-180.0, -90.0), (180.0, 90.0)))
-    return polygonal(clamped)
+    low = np.array((-180.0, -90.0))
+    high = np.array((180.0, 90.0))
+
+    def clamp(xy: np.ndarray) -> np.ndarray:
+        bad = (xy < low - EDGE_TOLERANCE) | (xy > high + EDGE_TOLERANCE)
+        if bad.any():
+            x, y = xy[np.argmax(bad.any(axis=1))]
+            raise ConfigError(f"coordinate ({x}, {y}) lies outside the world [-180, 180] x [-90, 90]")
+        return np.clip(xy, low, high)
+
+    return polygonal(shapely.transform(geom, clamp))
 
 
 def hole_free(geom: BaseGeometry) -> list[Polygon]:
@@ -88,4 +101,8 @@ def make_coverage(features: list[tuple[str, BaseGeometry]]) -> list[tuple[str, B
             merged = polygonal(shapely.union_all(owned[index]))
             if not merged.is_empty:
                 result.append((code, merged))
+    kept = {code for code, _ in result}
+    vanished = sorted({code for code, _ in features} - kept)
+    if vanished:
+        raise ConfigError(f"no area left after removing overlaps for: {', '.join(vanished)}")
     return result

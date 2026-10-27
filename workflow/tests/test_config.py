@@ -64,3 +64,27 @@ def test_paths(tmp_path: Path):
 @given(st.floats(min_value=0, max_value=10, allow_nan=False))
 def test_tolerance_roundtrips_from_text(value):
     assert load_config(None, env={}, cli={"tolerance": repr(value)}).tolerance == value
+
+
+FLOAT_FIELDS = ["tolerance", "presimplify", "voronoi_spacing", "sea_distance_km", "min_border_accuracy"]
+
+
+@pytest.mark.parametrize("field", FLOAT_FIELDS)
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_non_finite_floats_rejected(field, bad):
+    with pytest.raises(ConfigError, match=field):
+        BuildConfig(**{field: bad})
+
+
+@pytest.mark.parametrize("text", ["nan", "inf"])
+def test_non_finite_text_rejected(text):
+    with pytest.raises(ConfigError, match="tolerance"):
+        load_config(None, env={}, cli={"tolerance": text})
+
+
+def test_int_fields_reject_bool_and_fractions():
+    assert load_config(None, env={}, cli={"decimals": 3.0}).decimals == 3
+    with pytest.raises(ConfigError, match="decimals"):
+        load_config(None, env={}, cli={"decimals": 3.9})
+    with pytest.raises(ConfigError, match="samples"):
+        load_config(None, env={}, cli={"samples": True})

@@ -2,17 +2,19 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import shapely
-from shapely.geometry import Polygon, box
+from shapely.geometry import Point, Polygon, box
 
 from .config import ConfigError
-from .geom import hole_free, polygonal
+from .geom import EMPTY, hole_free, polygonal
 from .load import Feature
 
 Sectors = dict[str, list[float]]  # file name -> [lat_min, lng_min, lat_max, lng_max]
 WORLD_AREA = 360.0 * 180.0
+MANIFEST_NAME = "world_sectors.json"
 
 
 def sector_box(bounds: list[float]) -> Polygon:
@@ -20,20 +22,33 @@ def sector_box(bounds: list[float]) -> Polygon:
     return box(lng_min, lat_min, lng_max, lat_max)
 
 
+def _is_number(value: object) -> bool:
+    return isinstance(value, int | float) and not isinstance(value, bool) and math.isfinite(value)
+
+
 def read_sectors(path: Path) -> Sectors:
     data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ConfigError(f"{path.name} must be a JSON object of sector name to bounds")
     for name, bounds in data.items():
-        if not name.endswith(".json") or len(bounds) != 4 or not all(isinstance(v, int | float) for v in bounds):
+        if not name.endswith(".json"):
+            raise ConfigError(f"bad sector entry {name!r}: {bounds!r}")
+        if not isinstance(bounds, list) or len(bounds) != 4 or not all(_is_number(v) for v in bounds):
             raise ConfigError(f"bad sector entry {name!r}: {bounds!r}")
     check_tiling(data)
     return data
 
 
 def check_tiling(sectors: Sectors) -> None:
+    if MANIFEST_NAME in sectors:
+        raise ConfigError(f"sector name {MANIFEST_NAME!r} is reserved for the manifest")
+    for name, (lat_min, lng_min, lat_max, lng_max) in sectors.items():
+        if lat_min >= lat_max or lng_min >= lng_max:
+            raise ConfigError(f"sector {name!r} has no area: {[lat_min, lng_min, lat_max, lng_max]!r}")
+        if lat_min < -90 or lat_max > 90 or lng_min < -180 or lng_max > 180:
+            raise ConfigError(f"sector {name!r} lies outside the world")
     boxes = [sector_box(bounds) for bounds in sectors.values()]
-    if any(b.area <= 0 for b in boxes):
-        raise ConfigError("a sector box has no area")
-    union = shapely.union_all(boxes).intersection(box(-180, -90, 180, 90))
+    union = shapely.union_all(boxes)
     if sum(b.area for b in boxes) > union.area + 1e-9:
         raise ConfigError("sector boxes overlap")
     if union.area < WORLD_AREA - 1e-9:
@@ -53,8 +68,16 @@ def ring_coords(polygon: Polygon, decimals: int) -> list[list[float]]:
 
 
 def _center(land: dict, code: str, clipped, area: Polygon, decimals: int) -> list[float]:
-    inside = polygonal(shapely.intersection(land[code], area)) if code in land else clipped
-    point = (inside if not inside.is_empty else clipped).representative_point()
+    """A point of the code's written geometry in this sector, preferably on its land."""
+    inside = polygonal(shapely.intersection(land[code], area)) if code in land else EMPTY
+    for geom in (inside, clipped):
+        if geom.is_empty:
+            continue
+        point = geom.representative_point()
+        center = [round(point.y, decimals) + 0.0, round(point.x, decimals) + 0.0]
+        if clipped.covers(Point(center[1], center[0])):
+            return center
+    point = clipped.representative_point()
     return [round(point.y, decimals) + 0.0, round(point.x, decimals) + 0.0]
 
 

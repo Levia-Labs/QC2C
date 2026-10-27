@@ -1,6 +1,7 @@
 """Build settings: defaults, then qc2c.toml, then QC2C_* environment variables, then CLI flags."""
 from __future__ import annotations
 
+import math
 import os
 import tomllib
 from collections.abc import Mapping
@@ -35,6 +36,10 @@ class BuildConfig:
     seed: int = 1
 
     def __post_init__(self) -> None:
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, float) and not math.isfinite(value):
+                raise ConfigError(f"{field.name} must be a finite number, got {value!r}")
         if self.tolerance < 0 or self.presimplify < 0:
             raise ConfigError("tolerance and presimplify must be >= 0")
         if not 0 <= self.decimals <= 7:
@@ -81,6 +86,9 @@ def _coerce(name: str, value: Any) -> Any:
         if text in ("0", "false", "no", "off"):
             return False
         raise ConfigError(f"{name} must be true or false, got {value!r}")
+    if isinstance(default, int) and isinstance(value, bool | float):
+        if isinstance(value, bool) or not value.is_integer():
+            raise ConfigError(f"{name} must be a whole number, got {value!r}")
     try:
         return type(default)(value)
     except (TypeError, ValueError) as error:

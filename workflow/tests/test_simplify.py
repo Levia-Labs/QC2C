@@ -1,10 +1,12 @@
 import shapely
+from conftest import WORLD_FEATURES, feature, square, write_inputs
 from shapely.geometry import LineString, Polygon, box
 
+from qc2c_build import simplify
 from qc2c_build.geom import EMPTY
 from qc2c_build.load import load_features
 from qc2c_build.partition import build_partition
-from qc2c_build.simplify import restore_lost, simplify_partition
+from qc2c_build.simplify import restore_lost, simplify_partition, snapped_land
 
 
 def assert_on_grid(parts, grid):
@@ -17,7 +19,7 @@ def assert_on_grid(parts, grid):
                     assert abs(round(y / grid) - y / grid) < 1e-6
 
 
-def test_coordinates_on_grid_and_no_overlap(world):
+def test_no_restore_path_is_on_grid_and_a_valid_coverage(world):
     features = load_features(world)
     parts = simplify_partition(build_partition(features, world), features, world)
     assert_on_grid(parts, 0.001)
@@ -88,3 +90,49 @@ def test_restore_lost_covers_land_smaller_than_a_cell():
     assert restored["MIC"].intersection(land).area >= 0.9 * land.area
     assert shapely.coverage_is_valid([g for g in restored.values()])
     assert_on_grid(list(restored.items()), 0.001)
+
+
+def test_snapped_land_ignores_cells_that_only_touch():
+    # 0.7 / 0.001 is a hair under 700, so floor() starts one row below the land; that row only touches it.
+    land = box(0.7004, 0.7, 0.7014, 0.7004)
+    cover = snapped_land(land, 0.001, 0.9)
+    assert cover.bounds == (0.7, 0.7, 0.702, 0.701)
+    assert abs(cover.area - 2e-6) < 1e-12
+
+
+def test_restore_lost_later_restore_keeps_earlier_restored_land():
+    # Both lands are smaller than a cell and the cells covering them overlap in one cell.
+    land_a = box(10.0004, 20.0004, 10.0014, 20.0014)
+    land_b = box(10.0016, 20.0004, 10.0026, 20.0014)
+    host = box(0, 0, 30, 30).difference(land_a).difference(land_b)
+    land = [("HST", host), ("MCA", land_a), ("MCB", land_b)]
+    simplified = [("HST", box(0, 0, 30, 30)), ("MCA", EMPTY), ("MCB", EMPTY)]
+    restored = dict(restore_lost(land, simplified, grid=0.001))
+    assert restored["MCA"].intersection(land_a).area >= land_a.area - 1e-12
+    assert restored["MCB"].intersection(land_b).area >= land_b.area - 1e-12
+    assert shapely.coverage_is_valid(list(restored.values()))
+    assert abs(sum(g.area for g in restored.values()) - 900) < 1e-9
+
+
+def test_restore_lost_adds_a_land_code_missing_from_the_simplified_list():
+    tiny = box(5, 5, 5.004, 5.004)
+    host = box(0, 0, 10, 10).difference(tiny)
+    restored = dict(restore_lost([("HST", host), ("TNY", tiny)], [("HST", box(0, 0, 10, 10))], grid=0.001))
+    assert abs(restored["TNY"].area - tiny.area) < 1e-9
+    assert restored["HST"].intersection(restored["TNY"]).area < 1e-12
+
+
+def test_synthetic_world_restores_a_microstate_end_to_end(world, monkeypatch):
+    micro = square(-39, 21, -38.996, 21.004)
+    write_inputs(world.input_dir, [*WORLD_FEATURES, feature("AAA", "Micro", [micro])],
+                 overrides={"Nowhere": "NWH"})
+    calls = []
+    original = simplify.snapped_land
+    monkeypatch.setattr(simplify, "snapped_land", lambda *args: calls.append(args) or original(*args))
+    features = load_features(world)
+    parts = simplify_partition(build_partition(features, world), features, world)
+    land = dict(features)["AAA"]
+    assert calls, "the restore path did not run"
+    assert dict(parts)["AAA"].intersection(land).area >= 0.9 * land.area
+    assert shapely.coverage_is_valid([g for _, g in parts])
+    assert_on_grid(parts, 0.001)
