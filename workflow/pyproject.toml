@@ -1,0 +1,26 @@
+[project]
+name = "qc2c-build"
+version = "2.0.0"
+description = "Builds the QC2C sector data from source country borders."
+requires-python = ">=3.12"
+dependencies = ["shapely>=2.1,<3", "numpy>=2"]
+
+[project.optional-dependencies]
+preview = ["matplotlib>=3.9"]
+
+[project.scripts]
+qc2c-build = "qc2c_build.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "hypothesis>=6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/qc2c_build"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -p no:cacheprovider"

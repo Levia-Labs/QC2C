@@ -8,7 +8,7 @@ Directives, agents and hooks come from the crepidoma plugin (github.com/Levia-La
 
 ## Stack
 
-1. Python (setuptools), TypeScript (npm); world sector data as JSON and gzip.
+1. Python (setuptools package, uv-managed qc2c-build pipeline), TypeScript (npm); Docker Compose runs the pipeline and all test suites.
 
 ## Repo-specific rules
 
@@ -17,3 +17,4 @@ Directives, agents and hooks come from the crepidoma plugin (github.com/Levia-La
 ## Commands
 
 1. `task --list`; `claude:` and `lint:` come from the Crepidoma submodule.
+2. `task workflow:test`, `workflow:build`, `workflow:validate`, `workflow:publish`, `workflow:check`.

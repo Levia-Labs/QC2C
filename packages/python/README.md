@@ -19,7 +19,7 @@ from qc2c import coordinates_to_country
 
 coordinates_to_country({"lat": 52.23, "lng": 21.01})    # "POL"
 coordinates_to_country({"lat": 35.68, "lng": 139.69})   # "JPN"
-coordinates_to_country({"lat": 0.0, "lng": -140.0})     # None, open ocean
+coordinates_to_country({"lat": 0.0, "lng": -140.0})     # "PYF", nearest country for open ocean
 ```
 
 To use your own copy of the data, call the steps directly:
@@ -31,11 +31,36 @@ sector_key = get_sector(manifest, {"lat": 52.23, "lng": 21.01})  # "world_sector
 code = get_country(sectors[sector_key], {"lat": 52.23, "lng": 21.01})
 ```
 
+## Use the hosted data
+
+The Levia Labs website serves the plain-JSON files from the `web/` folder. This works only after the website ships `web/`. The snippet uses the standard library only.
+
+```python
+import json
+from urllib.request import urlopen
+
+from qc2c import get_country, get_sector
+
+BASE = "https://www.levialabs.net/assets/qc2c"
+point = {"lat": 52.23, "lng": 21.01}
+
+
+def fetch(name):
+    with urlopen(f"{BASE}/{name}") as response:
+        return json.load(response)
+
+
+sector_key = get_sector(fetch("world_sectors.json"), point)   # "world_sector_2.json"
+code = get_country(fetch(sector_key), point) if sector_key else None   # "POL"
+```
+
+Browser use from another domain needs the host to send CORS headers; until then, copy `web/` into your own site.
+
 ## API
 
 | Function | Returns |
 | --- | --- |
-| `coordinates_to_country(coordinates)` | Country code from the bundled data, or `None`. |
+| `coordinates_to_country(coordinates)` | Country code from the bundled data, or `None` when the coordinates fall outside [-90, 90] latitude or [-180, 180] longitude. |
 | `get_sector(manifest, coordinates)` | Key of the first sector whose bounding box contains the point, or `None`. |
 | `get_country(sector, coordinates)` | Key of the first country polygon in the sector that contains the point, or `None`. |
 | `point_in_polygon(point, polygon)` | `True` when `[lat, lng]` lies inside the polygon (ray casting). |
@@ -44,8 +69,9 @@ code = get_country(sectors[sector_key], {"lat": 52.23, "lng": 21.01})
 
 ## Notes
 
-1. Borders are approximate and cover land only; there are no maritime borders.
-2. The United States is split into states, so US points return the state code, for example `"NY"`.
+1. Borders are approximate and can be wrong close to a border.
+2. Points at sea return the nearest country, and United States points return `USA`.
 3. Data and algorithm match the [npm package](https://www.npmjs.com/package/qc2c).
+4. The data is built and validated by the [workflow](https://github.com/Levia-Labs/QC2C/tree/main/workflow).
 
 Source, data pipeline and issues: [github.com/Levia-Labs/QC2C](https://github.com/Levia-Labs/QC2C). MIT licensed.

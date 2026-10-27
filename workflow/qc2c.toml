@@ -1,0 +1,13 @@
+# Default build settings. Precedence: these values, then QC2C_<NAME> environment
+# variables, then qc2c-build command-line flags.
+tolerance = 0.05
+decimals = 3
+presimplify = 0.01
+voronoi_spacing = 0.25
+sea = "nearest"
+sea_distance_km = 200.0
+us_states = false
+samples = 40
+seed = 1
+# Set from the first full default build (Task 10); only ever raise it.
+min_border_accuracy = 0.98

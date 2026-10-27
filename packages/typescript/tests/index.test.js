@@ -44,11 +44,11 @@ describe("getCountry", () => {
 describe("bundled data", () => {
   test.each([
     [52.23, 21.01, "POL"],
-    // Bundled data splits the US into state codes.
-    [40.71, -74.0, "NY"],
+    [40.71, -74.0, "USA"],
     [-33.87, 151.21, "AUS"],
     [35.68, 139.69, "JPN"],
-    [0, -140, null],
+    // Open ocean returns the nearest country (Marquesas).
+    [0, -140, "PYF"],
   ])("(%s, %s) -> %s", (lat, lng, expected) => {
     expect(lookup({ lat, lng })).toBe(expected);
   });
@@ -63,5 +63,16 @@ describe("coordinatesToCountry", () => {
     };
     const urls = { manifest: "/", sectors: "" };
     expect(await coordinatesToCountry({ lat: 52.23, lng: 21.01 }, urls)).toBe("POL");
+  });
+
+  test("resolves null without a sector request for an out-of-range point", async () => {
+    const calls = [];
+    global.fetch = async (url) => {
+      calls.push(String(url));
+      return { ok: true, json: async () => load("world_sectors.json") };
+    };
+    const urls = { manifest: "/", sectors: "" };
+    expect(await coordinatesToCountry({ lat: 95, lng: 0 }, urls)).toBeNull();
+    expect(calls).toEqual(["/"]);
   });
 });

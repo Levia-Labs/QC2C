@@ -1,0 +1,78 @@
+# Docker engine for the QC2C pipeline. Run through Task: `task --list | grep workflow`.
+# Services must run through `task workflow:*`: the Task env sets QC2C_UID and QC2C_GID, while direct
+# `docker compose` on Windows falls back to 1000 and fails on root-mapped bind mounts.
+name: qc2c
+
+x-pipeline: &pipeline
+  build:
+    context: workflow
+  image: qc2c-build:local
+  user: "${QC2C_UID:-1000}:${QC2C_GID:-1000}"
+
+x-data: &data
+  - ./workflow/data/input:/data/input:ro
+  - ./workflow/data/output:/data/output
+  - ./workflow/qc2c.toml:/app/qc2c.toml:ro
+
+services:
+  build:
+    <<: *pipeline
+    volumes: *data
+    command: ["build"]
+
+  validate:
+    <<: *pipeline
+    volumes: *data
+    command: ["validate"]
+
+  preview:
+    <<: *pipeline
+    volumes: *data
+    command: ["preview"]
+
+  publish:
+    <<: *pipeline
+    volumes:
+      - ./workflow/data/input:/data/input:ro
+      - ./workflow/data/output:/data/output
+      - ./workflow/qc2c.toml:/app/qc2c.toml:ro
+      - ./packages/python/qc2c/data:/packages/python/qc2c/data
+      - ./packages/typescript/src/data:/packages/typescript/src/data
+      - ./packages/typescript/package.json:/packages/typescript/package.json:ro
+      - ./packages/fixtures:/packages/fixtures
+      - ./web:/web
+    environment:
+      QC2C_WEB_DIR: /web
+    command: ["publish"]
+
+  test-pipeline:
+    <<: *pipeline
+    volumes:
+      - ./workflow:/app:ro
+    environment:
+      PYTHONPATH: /app/src
+    entrypoint: ["python", "-m", "pytest"]
+    command: []
+
+  test-python:
+    <<: *pipeline
+    volumes:
+      - ./packages/python:/packages/python:ro
+      - ./packages/fixtures:/packages/fixtures:ro
+    working_dir: /packages/python
+    environment:
+      PYTHONPATH: /packages/python
+    entrypoint: ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests"]
+    command: []
+
+  test-node:
+    image: node:24-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205
+    user: "${QC2C_UID:-1000}:${QC2C_GID:-1000}"
+    volumes:
+      - ./packages/typescript:/packages/typescript
+      - ./packages/fixtures:/packages/fixtures:ro
+    working_dir: /packages/typescript
+    environment:
+      npm_config_cache: /tmp/npm-cache
+      HOME: /tmp
+    entrypoint: ["sh", "-c", "npm ci --no-audit --no-fund && npm run build && npm test"]

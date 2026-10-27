@@ -1,0 +1,4 @@
+data
+tests
+.venv
+**/__pycache__

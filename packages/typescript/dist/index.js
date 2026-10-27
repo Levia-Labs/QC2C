@@ -100,6 +100,10 @@ const coordinatesToCountry = (coordinates_1, ...args_1) => __awaiter(void 0, [co
         let data = yield response.json();
         // Determine the relevant sector key for the coordinates
         const sector = (0, exports.getSector)(data, coordinates);
+        // No sector contains the coordinates, so there is nothing more to fetch
+        if (sector === null) {
+            return null;
+        }
         // Fetch the sector-specific polygon data
         response = yield fetch(`${urls.sectors}/${sector}`);
         // Throw error if request fails

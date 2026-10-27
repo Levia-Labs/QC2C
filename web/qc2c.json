@@ -1,0 +1,50 @@
+{
+  "codes": 247,
+  "files": {
+    "preview.png": 187474,
+    "world_sector_1.json": 26123,
+    "world_sector_1.json.gz": 7137,
+    "world_sector_2.json": 140011,
+    "world_sector_2.json.gz": 45625,
+    "world_sector_3.json": 133607,
+    "world_sector_3.json.gz": 43776,
+    "world_sector_4.json": 92040,
+    "world_sector_4.json.gz": 26827,
+    "world_sector_5.json": 119421,
+    "world_sector_5.json.gz": 38830,
+    "world_sector_6.json": 11001,
+    "world_sector_6.json.gz": 3059,
+    "world_sectors.json": 7271,
+    "world_sectors.json.gz": 3482
+  },
+  "gzip_total": 168736,
+  "inputs": {
+    "code_overrides.json": "22c37e5187812e09c07c9d1cdc2e1aa3e91615abe3a003da381b444e1afe92c8",
+    "countries.json": "851ad2da8c3917f3b2f95c0bdaea0eb4524d12c84d5c7c0caac7a3cdd26e133e",
+    "world_sectors.json": "74d76906463fd2cc681850ba842412b2bbb24b10b88412834c2ace70e9272b9e"
+  },
+  "name": "qc2c",
+  "points": 32149,
+  "settings": {
+    "decimals": 3,
+    "presimplify": 0.01,
+    "sea": "nearest",
+    "sea_distance_km": 200.0,
+    "tolerance": 0.05,
+    "us_states": false,
+    "voronoi_spacing": 0.25
+  },
+  "validation": {
+    "border": 0.9812777456089558,
+    "core": 1.0,
+    "counts": {
+      "ambiguous": 137632,
+      "border": 15543,
+      "core": 404800,
+      "total": 557975
+    },
+    "overall": 0.999307708228756,
+    "passed": true
+  },
+  "version": "2.0.0"
+}

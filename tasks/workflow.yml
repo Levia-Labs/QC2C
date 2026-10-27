@@ -1,0 +1,68 @@
+version: "3"
+
+# Docker Desktop bind mounts on Windows report root ownership, so the container runs as root
+# there (files still land owned by the Windows user); elsewhere it runs as the caller.
+env:
+  QC2C_UID:
+    sh: 'case "${OS:-}$(uname -s 2>/dev/null)" in Windows_NT*|*MINGW*|*MSYS*|*CYGWIN*) echo 0;; *) id -u 2>/dev/null || echo 1000;; esac'
+  QC2C_GID:
+    sh: 'case "${OS:-}$(uname -s 2>/dev/null)" in Windows_NT*|*MINGW*|*MSYS*|*CYGWIN*) echo 0;; *) id -g 2>/dev/null || echo 1000;; esac'
+
+tasks:
+  image:
+    desc: "Build the pipeline image. Usage: task workflow:image"
+    run: once
+    cmds:
+      - docker compose build build
+
+  build:
+    desc: "Build sector data into workflow/data/output/<out> in Docker. Usage: task workflow:build -- [--tolerance 0.1] [--out name]"
+    deps: [image]
+    cmds:
+      - docker compose run --rm build build {{.CLI_ARGS}}
+
+  validate:
+    desc: "Validate a build against the source borders. Usage: task workflow:validate -- [--out name]"
+    deps: [image]
+    cmds:
+      - docker compose run --rm validate validate {{.CLI_ARGS}}
+
+  publish:
+    desc: "Copy a validated build into both packages and rebuild dist. Usage: task workflow:publish -- [--out name]"
+    deps: [image]
+    cmds:
+      - docker compose run --rm publish publish {{.CLI_ARGS}}
+      - task: test-node
+
+  check:
+    desc: "Fail when package data differs from the build. Usage: task workflow:check -- [--out name]"
+    deps: [image]
+    cmds:
+      - docker compose run --rm publish compare {{.CLI_ARGS}}
+
+  preview:
+    desc: "Render a build to preview.png in its output folder. Usage: task workflow:preview -- [--out name]"
+    deps: [image]
+    cmds:
+      - docker compose run --rm preview preview {{.CLI_ARGS}}
+
+  test:
+    desc: "Run pipeline, Python and Node suites in parallel. Usage: task workflow:test"
+    deps: [test-pipeline, test-python, test-node]
+
+  test-pipeline:
+    desc: "Run the pipeline unit tests in Docker. Usage: task workflow:test-pipeline -- [pytest args]"
+    deps: [image]
+    cmds:
+      - docker compose run --rm test-pipeline {{.CLI_ARGS}}
+
+  test-python:
+    desc: "Run the Python package tests in Docker. Usage: task workflow:test-python"
+    deps: [image]
+    cmds:
+      - docker compose run --rm test-python
+
+  test-node:
+    desc: "Install, build and test the TypeScript package in Docker. Usage: task workflow:test-node"
+    cmds:
+      - docker compose run --rm test-node

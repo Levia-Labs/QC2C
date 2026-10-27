@@ -1,8 +1,0 @@
-{
-  "world_sector_1.json": [24, -180, 90, -26],
-  "world_sector_2.json": [28, -26, 90, 62],
-  "world_sector_3.json": [-10, 62, 90, 180],
-  "world_sector_4.json": [-90, -180, 24, -26],
-  "world_sector_5.json": [-90, -26, 28, 62],
-  "world_sector_6.json": [-90, 62, -10, 180]
-}

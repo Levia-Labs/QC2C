@@ -39,11 +39,27 @@ const code = await coordinatesToCountry(
 // "POL"
 ```
 
+## Use the hosted data
+
+The Levia Labs website serves the plain-JSON files from the `web/` folder. This works only after the website ships `web/`.
+
+```ts
+import { coordinatesToCountry } from "qc2c";
+
+const code = await coordinatesToCountry(
+  { lat: 52.23, lng: 21.01 },
+  { manifest: "https://www.levialabs.net/assets/qc2c/world_sectors.json", sectors: "https://www.levialabs.net/assets/qc2c" },
+);
+// "POL"
+```
+
+Browser use from another domain needs the host to send CORS headers; until then, copy `web/` into your own site.
+
 ## API
 
 | Function | Returns |
 | --- | --- |
-| `coordinatesToCountry(coordinates, urls)` | Fetches the manifest and one sector file, then returns the country code or `null`. |
+| `coordinatesToCountry(coordinates, urls)` | Fetches the manifest and one sector file, then returns the country code, or `null` when the coordinates fall outside [-90, 90] latitude or [-180, 180] longitude or a fetch fails. |
 | `getSector(manifest, coordinates)` | Key of the first sector whose bounding box contains the point, or `null`. |
 | `getCountry(sector, coordinates)` | Key of the first country polygon in the sector that contains the point, or `null`. |
 
@@ -51,8 +67,9 @@ const code = await coordinatesToCountry(
 
 ## Notes
 
-1. Borders are approximate and cover land only; there are no maritime borders.
-2. The United States is split into states, so US points return the state code, for example `"NY"`.
+1. Borders are approximate and can be wrong close to a border.
+2. Points at sea return the nearest country, and United States points return `USA`.
 3. Data and algorithm match the [PyPI package](https://pypi.org/project/qc2c/).
+4. The data is built and validated by the [workflow](https://github.com/Levia-Labs/QC2C/tree/main/workflow).
 
 Source, data pipeline and issues: [github.com/Levia-Labs/QC2C](https://github.com/Levia-Labs/QC2C). MIT licensed.
