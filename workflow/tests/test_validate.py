@@ -4,11 +4,10 @@ from dataclasses import replace
 
 import numpy as np
 from conftest import WORLD_FEATURES, feature, square, write_inputs
-
+from qc2c_build import validate
 from qc2c_build.load import load_features
 from qc2c_build.pipeline import run_build
 from qc2c_build.sectors import read_sectors
-from qc2c_build import validate
 from qc2c_build.validate import PointSet, classify, fixture, load_output, lookup, run_validation, source_points
 
 
@@ -113,6 +112,64 @@ def test_manifest_bounds_mismatch_fails(world):
     report = run_validation(world)
     assert not report["passed"]
     assert any("manifest bounds differ" in f for f in report["failures"])
+
+
+def _corrupt_manifest(world, edit):
+    run_build(world)
+    path = world.build_dir / "world_sectors.json.gz"
+    manifest = json.loads(gzip.decompress(path.read_bytes()))
+    edit(manifest["world_sector_1.json.gz"])
+    path.write_bytes(gzip.compress(json.dumps(manifest).encode("utf-8")))
+    return run_validation(world)
+
+
+def _corrupt_sector(world, edit):
+    run_build(world)
+    path = world.build_dir / "world_sector_1.json.gz"
+    sector = json.loads(gzip.decompress(path.read_bytes()))
+    edit(sector)
+    path.write_bytes(gzip.compress(json.dumps(sector).encode("utf-8")))
+    return run_validation(world)
+
+
+def _assert_failed(report, text):
+    assert not report["passed"]
+    assert any(text in f for f in report["failures"])
+
+
+def test_non_numeric_bound_fails_without_raising(world):
+    _assert_failed(_corrupt_manifest(world, lambda e: e["bounds"].__setitem__(0, "x")), "no valid bounds")
+
+
+def test_non_finite_bound_fails_without_raising(world):
+    _assert_failed(_corrupt_manifest(world, lambda e: e["bounds"].__setitem__(0, 1e999)), "no valid bounds")
+
+
+def test_non_object_center_fails_without_raising(world):
+    _assert_failed(_corrupt_manifest(world, lambda e: e.__setitem__("center", [1, 2])), "no valid center")
+
+
+def test_ring_not_a_list_fails_without_raising(world):
+    def edit(sector):
+        sector[next(iter(sector))][0] = "ring"
+    _assert_failed(_corrupt_sector(world, edit), "world_sector_1.json.gz")
+
+
+def test_pair_with_three_numbers_fails_without_raising(world):
+    def edit(sector):
+        sector[next(iter(sector))][0][0] = [1, 2, 3]
+    _assert_failed(_corrupt_sector(world, edit), "world_sector_1.json.gz")
+
+
+def test_ring_with_two_points_fails_without_raising(world):
+    def edit(sector):
+        ring = sector[next(iter(sector))][0]
+        del ring[2:]
+    _assert_failed(_corrupt_sector(world, edit), "world_sector_1.json.gz")
+
+
+def test_sector_not_mapping_to_rings_fails_without_raising(world):
+    _assert_failed(_corrupt_sector(world, lambda s: s.__setitem__("AAA", 5)), "world_sector_1.json.gz")
 
 
 def test_world_edge_vertices_resolve(world):

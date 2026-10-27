@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -85,12 +86,40 @@ def _read(path: Path) -> dict:
     return data
 
 
+def _number(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def _check_manifest_entry(key: str, entry) -> None:
+    if not isinstance(entry, dict):
+        raise ValidationError(f"manifest entry {key} is not an object")
+    bounds = entry.get("bounds")
+    if not isinstance(bounds, list) or len(bounds) != 4 or not all(_number(b) for b in bounds):
+        raise ValidationError(f"manifest entry {key} has no valid bounds")
+    if not isinstance(entry.get("center"), dict):
+        raise ValidationError(f"manifest entry {key} has no valid center")
+
+
+def _check_sector(key: str, sector: dict) -> None:
+    for code, rings in sector.items():
+        if not isinstance(rings, list):
+            raise ValidationError(f"{key}: {code} is not a list of rings")
+        for ring in rings:
+            if not isinstance(ring, list) or len(ring) < 3:
+                raise ValidationError(f"{key}: {code} has a ring that is not a list of at least 3 points")
+            for pair in ring:
+                if not isinstance(pair, list) or len(pair) != 2 or not all(_number(v) for v in pair):
+                    raise ValidationError(f"{key}: {code} has a point that is not a [lat, lng] number pair")
+
+
 def load_output(build_dir: Path) -> tuple[dict, dict[str, dict]]:
     manifest = _read(build_dir / "world_sectors.json.gz")
     for key, entry in manifest.items():
-        if not isinstance(entry, dict) or not isinstance(entry.get("bounds"), list) or len(entry["bounds"]) != 4:
-            raise ValidationError(f"manifest entry {key} has no valid bounds")
-    return manifest, {key: _read(build_dir / key) for key in manifest}
+        _check_manifest_entry(key, entry)
+    sector_files = {key: _read(build_dir / key) for key in manifest}
+    for key, sector in sector_files.items():
+        _check_sector(key, sector)
+    return manifest, sector_files
 
 
 def lookup(manifest: dict, sector_files: dict[str, dict], xy: np.ndarray) -> np.ndarray:
@@ -146,7 +175,8 @@ def fixture(points: PointSet, kind: np.ndarray, sectors: Sectors, seed: int, siz
     rest = np.setdiff1d(pool, chosen)
     extra = rng.choice(rest, size=min(max(size - len(chosen), 0), len(rest)), replace=False)
     picked = sorted(set(chosen) | {int(i) for i in extra})
-    return [{"lat": round(float(lat[i]), 6), "lng": round(float(lng[i]), 6), "code": str(points.code[i])} for i in picked]
+    return [{"lat": round(float(lat[i]), 6), "lng": round(float(lng[i]), 6), "code": str(points.code[i])}
+            for i in picked]
 
 
 def _accuracy(correct: np.ndarray, mask: np.ndarray) -> float:
@@ -192,8 +222,10 @@ def run_validation(cfg: BuildConfig) -> dict:
         "band": band(cfg),
         "counts": {"total": len(kind), "core": int(core.sum()), "border": int(border.sum()),
                    "ambiguous": int((kind == AMBIGUOUS).sum())},
-        "accuracy": {"overall": _accuracy(correct, scored), "core": _accuracy(correct, core), "border": border_accuracy},
+        "accuracy": {"overall": _accuracy(correct, scored), "core": _accuracy(correct, core),
+                     "border": border_accuracy},
         "worst": sorted(per_code, key=lambda c: (per_code[c]["accuracy"], c))[:10],
+        "fixture_size": len(chosen),
         "fixture_missing": sorted(source_codes - {entry["code"] for entry in chosen}),
         "per_code": per_code,
     }
