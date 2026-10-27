@@ -2,7 +2,7 @@
 # Refresh: uv run python .crepidoma/tools/folder_readme.py update
 
 [folders]
-".github/workflows" = "GitHub Actions: publishing a GitHub release publishes both packages to PyPI and npm through trusted publishing."
+".github/workflows" = "GitHub Actions: `ci.yml` gates pull requests and main; publishing a GitHub release runs `release.yml`, whose `validate-data` job must pass before both packages publish to PyPI and npm through trusted publishing."
 ".claude" ="Claude Code settings for this repo; opts in to the Crepidoma plugin."
 ".ratchet" = "Ratchet baselines; numbers only move in the good direction."
 "assets" = "Brand assets used by the READMEs."
@@ -28,21 +28,25 @@
 "packages/typescript/src/data/json" = "Plain JSON sector manifest and sector polygons."
 "packages/typescript/tests" = "Jest suite for the TypeScript package."
 "workflow" = "Data pipeline that turns raw country borders into compact sector files."
-"workflow/data" = "Pipeline inputs and build outputs."
+"workflow/data" = "Pipeline inputs and build outputs, one output folder per --out name."
 "workflow/data/input" = "Source borders, code overrides and the sector manifest read by qc2c-build."
 "workflow/data/output" = "Build outputs, one folder per --out name; ignored by git."
 "tasks" = "Task namespaces owned by this repo."
 "workflow/src" = "Source of the qc2c-build package."
 "workflow/src/qc2c_build" = "Pipeline modules: load, partition, simplify, sectors, write, validate, publish, preview, cli."
 "workflow/tests" = "Pipeline tests on a synthetic world."
+"web" = "Website bundle written by qc2c-build publish: plain-JSON and gzip sector files, qc2c.json metadata and preview.png, copied by the Levia Labs website."
 "packages/fixtures" = "Points with expected codes, written by qc2c-build publish and used by both library test suites."
 
 [files]
-"ci.yml" = "Pull request gate: Docker test suites, data build, validation and package data check."
+"fixture.test.js" = "Checks every pipeline fixture point against the built library."
+"qc2c.json" = "Build metadata for the website: version, settings, sizes and validation summary."
+"preview.png" = "Rendered map of the shipped sectors."
+"ci.yml" = "Pull request and main gate: Docker test suites, data build, validation and package data check; cancels superseded runs."
 "folder-purposes.toml" = "Folder and file purposes for the generated README contents lists."
 "logo.svg" = "Project logo shown in the root README."
 "long-files.baseline" = "Files allowed over the line cap, with their current length."
-"release.yml" = "Builds, tests and publishes both packages on a published GitHub release."
+"release.yml" = "On a published release: validate-data gate, then build, test and publish both packages."
 "settings.json" ="Shared Claude Code settings committed for every collaborator."
 "world_sectors.json" = "Sector manifest: bounding box and country centers per sector file."
 "world_sectors.json.gz" = "Gzipped sector manifest: bounding box and country centers per sector file."

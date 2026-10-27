@@ -64,4 +64,15 @@ describe("coordinatesToCountry", () => {
     const urls = { manifest: "/", sectors: "" };
     expect(await coordinatesToCountry({ lat: 52.23, lng: 21.01 }, urls)).toBe("POL");
   });
+
+  test("resolves null without a sector request for an out-of-range point", async () => {
+    const calls = [];
+    global.fetch = async (url) => {
+      calls.push(String(url));
+      return { ok: true, json: async () => load("world_sectors.json") };
+    };
+    const urls = { manifest: "/", sectors: "" };
+    expect(await coordinatesToCountry({ lat: 95, lng: 0 }, urls)).toBeNull();
+    expect(calls).toEqual(["/"]);
+  });
 });

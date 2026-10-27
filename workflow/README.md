@@ -46,7 +46,11 @@ Defaults live in [qc2c.toml](qc2c.toml). Environment variables `QC2C_<NAME>` ove
 
 ## Validation
 
-Every source vertex and 40 random interior points per country are looked up in the output. Points farther from any other country than `2 * (presimplify + tolerance + grid + 0.001) + voronoi_spacing / 2` degrees must return their own code; points on a shared border are not scored; points in between must reach `min_border_accuracy`. Every source code must appear in the output. Results go to `validation.json`, and a sample of 500 safe points goes to `points.json`, which both library test suites check.
+Every source vertex and a number of random interior points per country (`samples`, default 40) are looked up in the output. Points farther from any other country than `2 * (presimplify + tolerance + grid + 0.001) + voronoi_spacing / 2` degrees must return their own code; points on a shared border are not scored; points in between must reach `min_border_accuracy`. Every source code must appear in the output. Results go to `validation.json`, and up to 500 safe fixture points go to `points.json`, which both library test suites check.
+
+## Website bundle
+
+`task workflow:publish` also writes the top-level `web/` folder (plain-JSON manifest, gz copies, `qc2c.json` metadata, `preview.png`) that the Levia Labs website copies; see `web/README.md`.
 
 ## Without Docker
 

@@ -34,6 +34,7 @@ class BuildConfig:
     samples: int = 40
     min_border_accuracy: float = 0.0
     seed: int = 1
+    web_dir: Path = Path("../web")
 
     def __post_init__(self) -> None:
         for field in fields(self):
@@ -86,9 +87,9 @@ def _coerce(name: str, value: Any) -> Any:
         if text in ("0", "false", "no", "off"):
             return False
         raise ConfigError(f"{name} must be true or false, got {value!r}")
-    if isinstance(default, int) and isinstance(value, bool | float):
-        if isinstance(value, bool) or not value.is_integer():
-            raise ConfigError(f"{name} must be a whole number, got {value!r}")
+    if isinstance(default, int) and isinstance(value, bool | float) and (
+            isinstance(value, bool) or not value.is_integer()):
+        raise ConfigError(f"{name} must be a whole number, got {value!r}")
     try:
         return type(default)(value)
     except (TypeError, ValueError) as error:

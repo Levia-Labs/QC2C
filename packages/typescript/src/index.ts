@@ -110,6 +110,11 @@ export const coordinatesToCountry = async (
     // Determine the relevant sector key for the coordinates
     const sector = getSector(data, coordinates);
 
+    // No sector contains the coordinates, so there is nothing more to fetch
+    if (sector === null) {
+      return null;
+    }
+
     // Fetch the sector-specific polygon data
     response = await fetch(`${urls.sectors}/${sector}`);
 

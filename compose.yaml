@@ -1,4 +1,6 @@
 # Docker engine for the QC2C pipeline. Run through Task: `task --list | grep workflow`.
+# Services must run through `task workflow:*`: the Task env sets QC2C_UID and QC2C_GID, while direct
+# `docker compose` on Windows falls back to 1000 and fails on root-mapped bind mounts.
 name: qc2c
 
 x-pipeline: &pipeline
@@ -32,11 +34,15 @@ services:
     <<: *pipeline
     volumes:
       - ./workflow/data/input:/data/input:ro
-      - ./workflow/data/output:/data/output:ro
+      - ./workflow/data/output:/data/output
       - ./workflow/qc2c.toml:/app/qc2c.toml:ro
       - ./packages/python/qc2c/data:/packages/python/qc2c/data
       - ./packages/typescript/src/data:/packages/typescript/src/data
+      - ./packages/typescript/package.json:/packages/typescript/package.json:ro
       - ./packages/fixtures:/packages/fixtures
+      - ./web:/web
+    environment:
+      QC2C_WEB_DIR: /web
     command: ["publish"]
 
   test-pipeline:

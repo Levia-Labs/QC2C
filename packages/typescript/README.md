@@ -39,6 +39,22 @@ const code = await coordinatesToCountry(
 // "POL"
 ```
 
+## Use the hosted data
+
+The Levia Labs website serves the plain-JSON files from the `web/` folder. This works only after the website ships `web/`.
+
+```ts
+import { coordinatesToCountry } from "qc2c";
+
+const code = await coordinatesToCountry(
+  { lat: 52.23, lng: 21.01 },
+  { manifest: "https://www.levialabs.net/assets/qc2c/world_sectors.json", sectors: "https://www.levialabs.net/assets/qc2c" },
+);
+// "POL"
+```
+
+Browser use from another domain needs the host to send CORS headers; until then, copy `web/` into your own site.
+
 ## API
 
 | Function | Returns |

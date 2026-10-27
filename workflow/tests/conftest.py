@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 from hypothesis import settings
-
 from qc2c_build.config import BuildConfig
 
 # The Docker test service mounts the source read-only; keep Hypothesis from writing its example database.
@@ -57,5 +56,8 @@ def world(tmp_path: Path) -> BuildConfig:
     a country spanning the equator (the sector edge) and a '-99' entry."""
     inputs = tmp_path / "input"
     write_inputs(inputs, WORLD_FEATURES, overrides={"Nowhere": "NWH"})
+    package = tmp_path / "packages/typescript/package.json"
+    package.parent.mkdir(parents=True)
+    package.write_text(json.dumps({"name": "qc2c", "version": "0.0.0-test"}), encoding="utf-8")
     return BuildConfig(input_dir=inputs, output_dir=tmp_path / "output", packages_dir=tmp_path / "packages",
-                       presimplify=0.0, voronoi_spacing=1.0, samples=10)
+                       web_dir=tmp_path / "web", presimplify=0.0, voronoi_spacing=1.0, samples=10)

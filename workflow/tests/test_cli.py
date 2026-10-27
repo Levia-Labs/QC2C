@@ -6,7 +6,8 @@ from qc2c_build.cli import main
 
 def args(cfg, *extra):
     return ["--config", "none.toml", "--input-dir", str(cfg.input_dir), "--output-dir", str(cfg.output_dir),
-            "--packages-dir", str(cfg.packages_dir), "--presimplify", "0", "--voronoi-spacing", "1",
+            "--packages-dir", str(cfg.packages_dir), "--web-dir", str(cfg.web_dir),
+            "--presimplify", "0", "--voronoi-spacing", "1",
             "--samples", "10", *extra]
 
 

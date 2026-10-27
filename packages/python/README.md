@@ -31,6 +31,31 @@ sector_key = get_sector(manifest, {"lat": 52.23, "lng": 21.01})  # "world_sector
 code = get_country(sectors[sector_key], {"lat": 52.23, "lng": 21.01})
 ```
 
+## Use the hosted data
+
+The Levia Labs website serves the plain-JSON files from the `web/` folder. This works only after the website ships `web/`. The snippet uses the standard library only.
+
+```python
+import json
+from urllib.request import urlopen
+
+from qc2c import get_country, get_sector
+
+BASE = "https://www.levialabs.net/assets/qc2c"
+point = {"lat": 52.23, "lng": 21.01}
+
+
+def fetch(name):
+    with urlopen(f"{BASE}/{name}") as response:
+        return json.load(response)
+
+
+sector_key = get_sector(fetch("world_sectors.json"), point)   # "world_sector_2.json"
+code = get_country(fetch(sector_key), point) if sector_key else None   # "POL"
+```
+
+Browser use from another domain needs the host to send CORS headers; until then, copy `web/` into your own site.
+
 ## API
 
 | Function | Returns |

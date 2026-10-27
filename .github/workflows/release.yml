@@ -17,6 +17,7 @@ permissions:
 jobs:
   validate-data:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -27,6 +28,7 @@ jobs:
       - run: task workflow:check
 
   build-python:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -42,6 +44,7 @@ jobs:
           path: packages/python/dist/
 
   publish-pypi:
+    timeout-minutes: 15
     needs: [build-python, validate-data]
     runs-on: ubuntu-latest
     environment: pypi
@@ -55,6 +58,7 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
 
   build-npm:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -74,6 +78,7 @@ jobs:
           path: packages/typescript/qc2c-*.tgz
 
   publish-npm:
+    timeout-minutes: 15
     needs: [build-npm, validate-data]
     runs-on: ubuntu-latest
     environment: npm

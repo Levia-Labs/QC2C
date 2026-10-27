@@ -14,7 +14,7 @@
 - [`partition.py`](partition.py) - Give sea to the nearest country, so the output covers the whole plane.
 - [`pipeline.py`](pipeline.py) - Run the build stages in order and record what was built.
 - [`preview.py`](preview.py) - Draw a build as a PNG with sector boxes, without a display.
-- [`publish.py`](publish.py) - Copy a validated build into both packages, or report how they differ from it.
+- [`publish.py`](publish.py) - Copy a validated build into both packages and the website folder, or report how they differ from it.
 - [`sectors.py`](sectors.py) - Clip the partition to sector boxes and turn it into the shipped JSON shape.
 - [`simplify.py`](simplify.py) - Simplify shared borders once, snap to the output grid and keep every code alive.
 - [`validate.py`](validate.py) - Check a build against the source borders; write validation.json and the library fixture.

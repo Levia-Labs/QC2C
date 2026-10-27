@@ -164,7 +164,7 @@ Services set `user: "${UID:-1000}:${GID:-1000}"` so Linux hosts get files they o
 2. Property tests with Hypothesis: rounding never moves a point more than half a unit in the last decimal; clipping to a box partition preserves total area within float tolerance.
 3. Library suites (pytest and jest) load `packages/fixtures/points.json` and assert every expected code, which proves both libraries agree with the pipeline.
 4. Full validation on the real data runs in `ci.yml` and in `release.yml` before publishing.
-5. `ci.yml` on pull requests: `task test`, `task workflow:validate` on a fresh build, `task workflow:check`.
+5. `ci.yml` on pull requests: `task workflow:test`, `task workflow:validate` on a fresh build, `task workflow:check`.
 
 ## Versioning and docs
 
