@@ -1,4 +1,5 @@
 """Draw a build as a PNG with sector boxes, without a display."""
+
 from __future__ import annotations
 
 import gzip
@@ -28,11 +29,26 @@ def render(cfg: BuildConfig) -> Path:
         sector = json.loads(gzip.decompress((build / key).read_bytes()))
         for code, rings in sector.items():
             for ring in rings:
-                axes.add_patch(Polygon([(lng, lat) for lat, lng in ring], closed=True,
-                                       facecolor=_color(code), edgecolor="black", linewidth=0.1))
+                axes.add_patch(
+                    Polygon(
+                        [(lng, lat) for lat, lng in ring],
+                        closed=True,
+                        facecolor=_color(code),
+                        edgecolor="black",
+                        linewidth=0.1,
+                    )
+                )
         lat_min, lng_min, lat_max, lng_max = entry["bounds"]
-        axes.add_patch(Rectangle((lng_min, lat_min), lng_max - lng_min, lat_max - lat_min,
-                                 fill=False, edgecolor="red", linewidth=0.8))
+        axes.add_patch(
+            Rectangle(
+                (lng_min, lat_min),
+                lng_max - lng_min,
+                lat_max - lat_min,
+                fill=False,
+                edgecolor="red",
+                linewidth=0.8,
+            )
+        )
     axes.set_xlim(-180, 180)
     axes.set_ylim(-90, 90)
     axes.set_aspect("equal")

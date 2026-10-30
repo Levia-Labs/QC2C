@@ -1,33 +1,35 @@
+# requires-python is >=3.8: keep builtin generics and X | None annotations lazy.
+from __future__ import annotations
+
 import gzip
 import json
-import os
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any
 
-_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+_DATA_DIR = Path(__file__).resolve().parent / "data"
 
 
-def _bounds_of(value: Any) -> List[float]:
+def _bounds_of(value: Any) -> list[float]:
     """Accept a bare bounds list or a dict carrying a 'bounds' entry."""
     if isinstance(value, dict):
         return value["bounds"]
     return value
 
 
-def _polygons_of(value: Any) -> List[List[List[float]]]:
+def _polygons_of(value: Any) -> list[list[list[float]]]:
     """Normalise a country value (one polygon or a list of polygons) to a list of polygons."""
     if value and isinstance(value[0][0], (int, float)):
         return [value]
     return value
 
 
-def get_sector(
-    sectors_manifest: Dict[str, Any], coordinates: Dict[str, float]
-) -> Optional[str]:
+def get_sector(sectors_manifest: dict[str, Any], coordinates: dict[str, float]) -> str | None:
     """
     Find which sector a coordinate falls into based on bounding boxes.
 
     Args:
-        sectors_manifest: Dict mapping sector keys to bounding box lists [lat_min, lng_min, lat_max, lng_max].
+        sectors_manifest: Dict mapping sector keys to bounding box lists
+            [lat_min, lng_min, lat_max, lng_max].
         coordinates: Dict with 'lat' and 'lng' keys.
 
     Returns:
@@ -43,7 +45,7 @@ def get_sector(
     return None
 
 
-def point_in_polygon(point: List[float], polygon: List[List[float]]) -> bool:
+def point_in_polygon(point: list[float], polygon: list[list[float]]) -> bool:
     """
     Check if a point is inside a polygon using ray casting algorithm.
 
@@ -63,17 +65,13 @@ def point_in_polygon(point: List[float], polygon: List[List[float]]) -> bool:
         xi, yi = polygon[i]
         xj, yj = polygon[j]
 
-        intersect = ((yi > y) != (yj > y)) and (
-            x < (xj - xi) * (y - yi) / (yj - yi + 1e-15) + xi
-        )
+        intersect = ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi + 1e-15) + xi)
         if intersect:
             inside = not inside
     return inside
 
 
-def get_country(
-    sector_manifest: Dict[str, Any], coordinates: Dict[str, float]
-) -> Optional[str]:
+def get_country(sector_manifest: dict[str, Any], coordinates: dict[str, float]) -> str | None:
     """
     Determine the country within a sector by testing polygons.
 
@@ -95,11 +93,11 @@ def get_country(
 
 def _load(name: str) -> Any:
     """Load a bundled data file (name without extension), preferring gz over json."""
-    gz_path = os.path.join(_DATA_DIR, "gz", name + ".json.gz")
-    if os.path.exists(gz_path):
+    gz_path = _DATA_DIR / "gz" / (name + ".json.gz")
+    if gz_path.exists():
         with gzip.open(gz_path, "rt", encoding="utf-8") as f:
             return json.load(f)
-    with open(os.path.join(_DATA_DIR, "json", name + ".json"), encoding="utf-8") as f:
+    with (_DATA_DIR / "json" / (name + ".json")).open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -110,7 +108,7 @@ def _stem(key: str) -> str:
     return key
 
 
-def coordinates_to_country(coordinates: Dict[str, float]) -> Optional[str]:
+def coordinates_to_country(coordinates: dict[str, float]) -> str | None:
     """
     Convert coordinates to an ISO3 country code using the bundled data.
 

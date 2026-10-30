@@ -1,12 +1,11 @@
 import shapely
 from conftest import WORLD_FEATURES, feature, square, write_inputs
-from shapely.geometry import LineString, Polygon, box
-
 from qc2c_build import simplify
 from qc2c_build.geom import EMPTY
 from qc2c_build.load import load_features
 from qc2c_build.partition import build_partition
 from qc2c_build.simplify import restore_lost, simplify_partition, snapped_land
+from shapely.geometry import LineString, Polygon, box
 
 
 def assert_on_grid(parts, grid):
@@ -76,8 +75,12 @@ def test_world_edges_covered_after_simplify(world):
     features = load_features(world)
     parts = simplify_partition(build_partition(features, world), features, world)
     union = shapely.union_all([g for _, g in parts])
-    for line in ([(-180, -90), (180, -90)], [(-180, 90), (180, 90)],
-                 [(-180, -90), (-180, 90)], [(180, -90), (180, 90)]):
+    for line in (
+        [(-180, -90), (180, -90)],
+        [(-180, 90), (180, 90)],
+        [(-180, -90), (-180, 90)],
+        [(180, -90), (180, 90)],
+    ):
         assert LineString(line).difference(union).length == 0
 
 
@@ -85,15 +88,19 @@ def test_restore_lost_covers_land_smaller_than_a_cell():
     # One grid cell holds less than 70% of this land when snapped to the nearest vertices.
     land = box(10.0004, 20.0004, 10.0014, 20.0014)
     host = box(0, 0, 30, 30).difference(land)
-    restored = dict(restore_lost([("HST", host), ("MIC", land)],
-                                 [("HST", box(0, 0, 30, 30)), ("MIC", EMPTY)], grid=0.001))
+    restored = dict(
+        restore_lost(
+            [("HST", host), ("MIC", land)], [("HST", box(0, 0, 30, 30)), ("MIC", EMPTY)], grid=0.001
+        )
+    )
     assert restored["MIC"].intersection(land).area >= 0.9 * land.area
     assert shapely.coverage_is_valid([g for g in restored.values()])
     assert_on_grid(list(restored.items()), 0.001)
 
 
 def test_snapped_land_ignores_cells_that_only_touch():
-    # 0.7 / 0.001 is a hair under 700, so floor() starts one row below the land; that row only touches it.
+    # 0.7 / 0.001 is a hair under 700, so floor() starts one row below the land;
+    # that row only touches it.
     land = box(0.7004, 0.7, 0.7014, 0.7004)
     cover = snapped_land(land, 0.001, 0.9)
     assert cover.bounds == (0.7, 0.7, 0.702, 0.701)
@@ -117,18 +124,25 @@ def test_restore_lost_later_restore_keeps_earlier_restored_land():
 def test_restore_lost_adds_a_land_code_missing_from_the_simplified_list():
     tiny = box(5, 5, 5.004, 5.004)
     host = box(0, 0, 10, 10).difference(tiny)
-    restored = dict(restore_lost([("HST", host), ("TNY", tiny)], [("HST", box(0, 0, 10, 10))], grid=0.001))
+    restored = dict(
+        restore_lost([("HST", host), ("TNY", tiny)], [("HST", box(0, 0, 10, 10))], grid=0.001)
+    )
     assert abs(restored["TNY"].area - tiny.area) < 1e-9
     assert restored["HST"].intersection(restored["TNY"]).area < 1e-12
 
 
 def test_synthetic_world_restores_a_microstate_end_to_end(world, monkeypatch):
     micro = square(-39, 21, -38.996, 21.004)
-    write_inputs(world.input_dir, [*WORLD_FEATURES, feature("AAA", "Micro", [micro])],
-                 overrides={"Nowhere": "NWH"})
+    write_inputs(
+        world.input_dir,
+        [*WORLD_FEATURES, feature("AAA", "Micro", [micro])],
+        overrides={"Nowhere": "NWH"},
+    )
     calls = []
     original = simplify.snapped_land
-    monkeypatch.setattr(simplify, "snapped_land", lambda *args: calls.append(args) or original(*args))
+    monkeypatch.setattr(
+        simplify, "snapped_land", lambda *args: calls.append(args) or original(*args)
+    )
     features = load_features(world)
     parts = simplify_partition(build_partition(features, world), features, world)
     land = dict(features)["AAA"]

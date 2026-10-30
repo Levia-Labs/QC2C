@@ -47,6 +47,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'qc2c_build.simplify'`
 
 ```python
 """Simplify shared borders once, snap to the output grid and keep every code alive."""
+
 from __future__ import annotations
 
 import shapely
@@ -60,14 +61,15 @@ def simplify_partition(parts: list[Feature], cfg: BuildConfig) -> list[Feature]:
     geoms = [geom for _, geom in parts]
     if cfg.tolerance > 0:
         geoms = list(shapely.coverage_simplify(geoms, cfg.tolerance))
-    grid = 10.0 ** -cfg.decimals
+    grid = 10.0**-cfg.decimals
     # The same grid for every geometry keeps shared vertices identical.
     snapped = [polygonal(shapely.set_precision(geom, grid)) for geom in geoms]
     return restore_lost(parts, [(code, geom) for (code, _), geom in zip(parts, snapped)], grid)
 
 
-def restore_lost(original: list[Feature], simplified: list[Feature], grid: float,
-                 keep: float = 0.5) -> list[Feature]:
+def restore_lost(
+    original: list[Feature], simplified: list[Feature], grid: float, keep: float = 0.5
+) -> list[Feature]:
     """Put back codes that simplification shrank below `keep` of their area.
 
     Microstates such as the Vatican are smaller than the tolerance and would

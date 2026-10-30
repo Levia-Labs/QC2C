@@ -4,10 +4,15 @@ import pytest
 from conftest import TWO_SECTORS
 from hypothesis import given
 from hypothesis import strategies as st
-from shapely.geometry import Point, Polygon, box
-
 from qc2c_build.config import ConfigError
-from qc2c_build.sectors import check_tiling, read_sectors, ring_coords, sector_box, split_into_sectors
+from qc2c_build.sectors import (
+    check_tiling,
+    read_sectors,
+    ring_coords,
+    sector_box,
+    split_into_sectors,
+)
+from shapely.geometry import Point, Polygon, box
 
 
 def test_tiling_ok():
@@ -31,7 +36,7 @@ def test_ring_coords_order_and_dedup():
 def test_rounding_moves_at_most_half_a_unit(x, y, decimals):
     polygon = Polygon([(x, y), (x + 1, y), (x + 1, y + 1)])
     ring = ring_coords(polygon, decimals)
-    half = 0.5 * 10.0 ** -decimals + 1e-9
+    half = 0.5 * 10.0**-decimals + 1e-9
     if ring:
         assert abs(ring[0][0] - y) <= half and abs(ring[0][1] - x) <= half
 
@@ -48,7 +53,7 @@ def test_split_spans_sectors_and_cuts_holes():
     parts = [("ENC", box(-32, 28, -28, 32)), ("HST", host), ("SPN", box(40, -10, 50, 10))]
     files, manifest = split_into_sectors(parts, parts, TWO_SECTORS, 3)
     assert "SPN" in files["world_sector_1.json"] and "SPN" in files["world_sector_2.json"]
-    assert list(files["world_sector_1.json"])[0] == "ENC"
+    assert next(iter(files["world_sector_1.json"])) == "ENC"
     assert all(len(ring) >= 3 for ring in files["world_sector_1.json"]["HST"])
     assert manifest["world_sector_1.json.gz"]["bounds"] == [0, -180, 90, 180]
     assert manifest["world_sector_1.json.gz"]["center"]["ENC"] == [30.0, -30.0]
@@ -60,20 +65,23 @@ def write_sectors(tmp_path, data):
     return path
 
 
-@pytest.mark.parametrize("data", [
-    [1, 2],
-    {"a.json": "abcd"},
-    {"a.json": 5},
-    {"a.json": None},
-    {"a.json": [0, 1, 2]},
-    {"a.json": [0, 0, "x", 10]},
-    {"a.json": [0, 0, True, 10]},
-    {"a.json": [10, 0, 0, 10]},
-    {"a.json": [0, 10, 10, 0]},
-    {"a.json": [0, 0, 0, 10]},
-    {"world_sectors.json": [-90, -180, 90, 180]},
-    {"a.json": [-90, -180, 90, float("nan")]},
-])
+@pytest.mark.parametrize(
+    "data",
+    [
+        [1, 2],
+        {"a.json": "abcd"},
+        {"a.json": 5},
+        {"a.json": None},
+        {"a.json": [0, 1, 2]},
+        {"a.json": [0, 0, "x", 10]},
+        {"a.json": [0, 0, True, 10]},
+        {"a.json": [10, 0, 0, 10]},
+        {"a.json": [0, 10, 10, 0]},
+        {"a.json": [0, 0, 0, 10]},
+        {"world_sectors.json": [-90, -180, 90, 180]},
+        {"a.json": [-90, -180, 90, float("nan")]},
+    ],
+)
 def test_read_sectors_rejects_bad_input_with_config_error(tmp_path, data):
     with pytest.raises(ConfigError):
         read_sectors(write_sectors(tmp_path, data))
@@ -109,7 +117,11 @@ def test_split_enclave_first_match_and_hole_free_host():
     host = box(-40, 20, -20, 40).difference(box(-32, 28, -28, 32))
     parts = [("HST", host), ("ENC", box(-32, 28, -28, 32))]
     files, _ = split_into_sectors(parts, parts, TWO_SECTORS, 3)
-    rings = [(code, ring) for code, code_rings in files["world_sector_1.json"].items() for ring in code_rings]
+    rings = [
+        (code, ring)
+        for code, code_rings in files["world_sector_1.json"].items()
+        for ring in code_rings
+    ]
     polygons = [(code, Polygon([(lng, lat) for lat, lng in ring])) for code, ring in rings]
     inside = Point(-30, 30)
     first = next(code for code, polygon in polygons if polygon.covers(inside))

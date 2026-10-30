@@ -64,25 +64,33 @@ def test_missing_override_names_feature(world):
 
 
 def test_usa_or_states(world):
-    countries = [feature("USA", "United States", [square(-100, 30, -80, 40)]),
-                 feature("PRI", "Puerto Rico", [square(-67, 18, -65, 19)])]
-    states = [feature("NY", "New York", [square(-80, 35, -75, 40)]),
-              feature("PR", "Puerto Rico", [square(-67, 18, -65, 19)])]
+    countries = [
+        feature("USA", "United States", [square(-100, 30, -80, 40)]),
+        feature("PRI", "Puerto Rico", [square(-67, 18, -65, 19)]),
+    ]
+    states = [
+        feature("NY", "New York", [square(-80, 35, -75, 40)]),
+        feature("PR", "Puerto Rico", [square(-67, 18, -65, 19)]),
+    ]
     write_inputs(world.input_dir, countries, states=states)
     assert codes(world) == ["PRI", "USA"]
     assert codes(replace(world, us_states=True)) == ["NY", "PRI"]
 
 
 def test_same_code_dissolves(world):
-    write_inputs(world.input_dir, [feature("AAA", "A1", [square(0, 0, 1, 1)]),
-                                   feature("AAA", "A2", [square(5, 5, 6, 6)])])
+    write_inputs(
+        world.input_dir,
+        [feature("AAA", "A1", [square(0, 0, 1, 1)]), feature("AAA", "A2", [square(5, 5, 6, 6)])],
+    )
     [(code, geom)] = load_features(world)
     assert code == "AAA" and abs(geom.area - 2) < 1e-9
 
 
 def test_overlaps_removed(world):
-    write_inputs(world.input_dir, [feature("AAA", "A", [square(0, 0, 2, 2)]),
-                                   feature("BBB", "B", [square(1, 1, 3, 3)])])
+    write_inputs(
+        world.input_dir,
+        [feature("AAA", "A", [square(0, 0, 2, 2)]), feature("BBB", "B", [square(1, 1, 3, 3)])],
+    )
     (_, a), (_, b) = load_features(world)
     assert a.intersection(b).area < 1e-12
     assert abs(a.area + b.area - 7) < 1e-9
@@ -104,6 +112,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'qc2c_build.geom'`
 
 ```python
 """Polygon helpers shared by the build stages."""
+
 from __future__ import annotations
 
 import shapely
@@ -158,6 +167,7 @@ def hole_free(geom: BaseGeometry) -> list[Polygon]:
 
 ```python
 """Read source borders, apply code overrides and dissolve features that share a code."""
+
 from __future__ import annotations
 
 import json

@@ -17,9 +17,9 @@ pip install qc2c
 ```python
 from qc2c import coordinates_to_country
 
-coordinates_to_country({"lat": 52.23, "lng": 21.01})    # "POL"
-coordinates_to_country({"lat": 35.68, "lng": 139.69})   # "JPN"
-coordinates_to_country({"lat": 0.0, "lng": -140.0})     # "PYF", nearest country for open ocean
+coordinates_to_country({"lat": 52.23, "lng": 21.01})  # "POL"
+coordinates_to_country({"lat": 35.68, "lng": 139.69})  # "JPN"
+coordinates_to_country({"lat": 0.0, "lng": -140.0})  # "PYF", nearest country for open ocean
 ```
 
 To use your own copy of the data, call the steps directly:
@@ -50,8 +50,8 @@ def fetch(name):
         return json.load(response)
 
 
-sector_key = get_sector(fetch("world_sectors.json"), point)   # "world_sector_2.json"
-code = get_country(fetch(sector_key), point) if sector_key else None   # "POL"
+sector_key = get_sector(fetch("world_sectors.json"), point)  # "world_sector_2.json"
+code = get_country(fetch(sector_key), point) if sector_key else None  # "POL"
 ```
 
 Browser use from another domain needs the host to send CORS headers; until then, copy `web/` into your own site.

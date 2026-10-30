@@ -1,8 +1,11 @@
-"""Copy a validated build into both packages and the website folder, or report how they differ from it."""
+"""Copy a validated build into both packages and the website folder.
+
+With check mode, report how they differ from it instead.
+"""
+
 from __future__ import annotations
 
 import json
-import os
 import shutil
 from pathlib import Path
 
@@ -13,7 +16,15 @@ TARGETS = ("python/qc2c/data", "typescript/src/data")
 FIXTURE = "fixtures/points.json"
 WEB = "web"
 WEB_KEEP = ("README.md",)
-WEB_SETTINGS = ("tolerance", "decimals", "presimplify", "voronoi_spacing", "sea", "sea_distance_km", "us_states")
+WEB_SETTINGS = (
+    "tolerance",
+    "decimals",
+    "presimplify",
+    "voronoi_spacing",
+    "sea",
+    "sea_distance_km",
+    "us_states",
+)
 
 Content = Path | bytes
 
@@ -91,7 +102,10 @@ def _metadata(cfg: BuildConfig, plan: list[tuple[Content, str]]) -> bytes:
 
 
 def _planned(cfg: BuildConfig) -> list[tuple[Content, Path, str]]:
-    """(content, destination, label) for everything publish writes; labels are relative to the repo's packages."""
+    """(content, destination, label) for everything publish writes.
+
+    Labels are relative to the repo's packages.
+    """
     sources = sorted(p for p in cfg.build_dir.glob("world_sector*") if p.suffix in (".json", ".gz"))
     plan: list[tuple[Content, Path, str]] = []
     for target in TARGETS:
@@ -104,11 +118,17 @@ def _planned(cfg: BuildConfig) -> list[tuple[Content, Path, str]]:
 
 
 def _web_labelled(cfg: BuildConfig, with_metadata: bool = True) -> list[tuple[Content, Path, str]]:
-    return [(content, cfg.web_dir / name, f"{WEB}/{name}") for content, name in _web_plan(cfg, with_metadata)]
+    return [
+        (content, cfg.web_dir / name, f"{WEB}/{name}")
+        for content, name in _web_plan(cfg, with_metadata)
+    ]
 
 
 def _atomic_copy(items: list[tuple[Content, Path]]) -> None:
-    """Write every item to <dest>.tmp, then rename all into place; on failure remove the temporaries."""
+    """Write every item to <dest>.tmp, then rename all into place.
+
+    On failure remove the temporaries.
+    """
     temporaries: list[tuple[Path, Path]] = []
     try:
         for content, destination in items:
@@ -124,17 +144,24 @@ def _atomic_copy(items: list[tuple[Content, Path]]) -> None:
             temporary.unlink(missing_ok=True)
         raise
     for temporary, destination in temporaries:
-        os.replace(temporary, destination)
+        Path(temporary).replace(destination)
 
 
 def _stale_files(cfg: BuildConfig, kept: set[Path]) -> list[Path]:
     stale = []
     for target in TARGETS:
         for folder in ("json", "gz"):
-            stale += [old for old in (cfg.packages_dir / target / folder).glob("world_sector*") if old not in kept]
+            stale += [
+                old
+                for old in (cfg.packages_dir / target / folder).glob("world_sector*")
+                if old not in kept
+            ]
     if cfg.web_dir.is_dir():
-        stale += [old for old in cfg.web_dir.iterdir()
-                  if old.is_file() and old.name not in WEB_KEEP and old not in kept]
+        stale += [
+            old
+            for old in cfg.web_dir.iterdir()
+            if old.is_file() and old.name not in WEB_KEEP and old not in kept
+        ]
     return stale
 
 
@@ -162,11 +189,16 @@ def publish(cfg: BuildConfig) -> list[Path]:
 
 
 def compare(cfg: BuildConfig) -> list[str]:
-    """Package and web paths whose bytes differ from the build, plus shipped files the build lacks."""
+    """Package and web paths whose bytes differ from the build.
+
+    Also lists shipped files the build lacks.
+    """
     planned = _planned(cfg)
     planned += _web_labelled(cfg)
     diffs = []
-    if not (cfg.build_dir / "preview.png").is_file():  # the shipped preview must match a rendered one
+    if not (
+        cfg.build_dir / "preview.png"
+    ).is_file():  # the shipped preview must match a rendered one
         diffs.append(f"{WEB}/preview.png")
     for content, destination, label in planned:
         expected = content if isinstance(content, bytes) else content.read_bytes()
@@ -174,8 +206,11 @@ def compare(cfg: BuildConfig) -> list[str]:
             diffs.append(label)
     expected_labels = {label for _, _, label in planned}
     for old in _stale_files(cfg, {destination for _, destination, _ in planned}):
-        label = (f"{WEB}/{old.name}" if old.parent == cfg.web_dir
-                 else old.relative_to(cfg.packages_dir).as_posix())
+        label = (
+            f"{WEB}/{old.name}"
+            if old.parent == cfg.web_dir
+            else old.relative_to(cfg.packages_dir).as_posix()
+        )
         if label not in expected_labels:
             diffs.append(label)
     return sorted(set(diffs))

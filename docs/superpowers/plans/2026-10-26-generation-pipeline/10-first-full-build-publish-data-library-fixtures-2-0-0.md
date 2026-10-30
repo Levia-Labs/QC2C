@@ -15,6 +15,7 @@
 
 ```python
 """Every fixture point written by qc2c-build must resolve to its expected code."""
+
 import json
 from pathlib import Path
 
@@ -26,8 +27,11 @@ FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "points.json"
 def test_fixture_points_match_pipeline():
     points = json.loads(FIXTURE.read_text(encoding="utf-8"))
     assert len(points) >= 250
-    wrong = [(p, coordinates_to_country({"lat": p["lat"], "lng": p["lng"]})) for p in points
-             if coordinates_to_country({"lat": p["lat"], "lng": p["lng"]}) != p["code"]]
+    wrong = [
+        (p, coordinates_to_country({"lat": p["lat"], "lng": p["lng"]}))
+        for p in points
+        if coordinates_to_country({"lat": p["lat"], "lng": p["lng"]}) != p["code"]
+    ]
     assert not wrong, wrong[:10]
 ```
 
@@ -57,13 +61,13 @@ test("fixture points match the pipeline", () => {
 Update the city cases. In `packages/python/tests/test_qc2c.py` replace lines 36 and 39:
 
 ```python
-        (40.71, -74.0, "USA"),
+((40.71, -74.0, "USA"),)
 ```
 
 and
 
 ```python
-        (0, -140, "PYF"),  # open ocean returns the nearest country (Marquesas)
+((0, -140, "PYF"),)  # open ocean returns the nearest country (Marquesas)
 ```
 
 In `packages/typescript/tests/index.test.js` replace lines 47 to 48 and line 52:

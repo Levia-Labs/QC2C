@@ -42,7 +42,7 @@ Python:
 from qc2c import coordinates_to_country
 
 coordinates_to_country({"lat": 52.23, "lng": 21.01})  # "POL"
-coordinates_to_country({"lat": 0.0, "lng": -140.0})   # "PYF", nearest country for open ocean
+coordinates_to_country({"lat": 0.0, "lng": -140.0})  # "PYF", nearest country for open ocean
 ```
 
 TypeScript in the browser, with the gzipped sector files hosted next to your app:

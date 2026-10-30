@@ -2,10 +2,9 @@ import pytest
 import shapely
 from hypothesis import given
 from hypothesis import strategies as st
-from shapely.geometry import LineString, Polygon, box
-
 from qc2c_build.config import ConfigError
 from qc2c_build.geom import clamp_to_world, hole_free, make_coverage, polygonal
+from shapely.geometry import LineString, Polygon, box
 
 
 def test_polygonal_drops_lines_and_repairs():
@@ -54,7 +53,7 @@ def test_clamp_to_world_stays_inside_or_raises(x, y, size):
     clamped = clamp_to_world(box(x, y, x + size, y + size))
     if not clamped.is_empty:
         min_x, min_y, max_x, max_y = clamped.bounds
-        assert -180 <= min_x and max_x <= 180 and -90 <= min_y and max_y <= 90
+        assert min_x >= -180 and max_x <= 180 and min_y >= -90 and max_y <= 90
     width = max(0.0, min(x + size, 180) - max(x, -180))
     height = max(0.0, min(y + size, 90) - max(y, -90))
     assert abs(clamped.area - width * height) < 1e-6
@@ -65,8 +64,10 @@ def test_clamp_to_world_pulls_edge_drift_back():
     assert clamped.bounds == (170.0, 50.0, 180.0, 60.0)
 
 
-@pytest.mark.parametrize("shape", [box(170, 50, 180.001, 60), box(-181, 0, -170, 10), box(0, 80, 10, 91),
-                                   box(0, -95, 10, -80)])
+@pytest.mark.parametrize(
+    "shape",
+    [box(170, 50, 180.001, 60), box(-181, 0, -170, 10), box(0, 80, 10, 91), box(0, -95, 10, -80)],
+)
 def test_clamp_to_world_rejects_far_outside_coordinates(shape):
     with pytest.raises(ConfigError, match="outside the world"):
         clamp_to_world(shape)

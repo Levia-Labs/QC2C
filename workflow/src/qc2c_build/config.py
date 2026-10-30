@@ -1,4 +1,5 @@
 """Build settings: defaults, then qc2c.toml, then QC2C_* environment variables, then CLI flags."""
+
 from __future__ import annotations
 
 import math
@@ -87,8 +88,11 @@ def _coerce(name: str, value: Any) -> Any:
         if text in ("0", "false", "no", "off"):
             return False
         raise ConfigError(f"{name} must be true or false, got {value!r}")
-    if isinstance(default, int) and isinstance(value, bool | float) and (
-            isinstance(value, bool) or not value.is_integer()):
+    if (
+        isinstance(default, int)
+        and isinstance(value, bool | float)
+        and (isinstance(value, bool) or not value.is_integer())
+    ):
         raise ConfigError(f"{name} must be a whole number, got {value!r}")
     try:
         return type(default)(value)
@@ -96,8 +100,11 @@ def _coerce(name: str, value: Any) -> Any:
         raise ConfigError(f"{name}: cannot read {value!r}") from error
 
 
-def load_config(toml_path: Path | None = None, env: Mapping[str, str] | None = None,
-                cli: Mapping[str, Any] | None = None) -> BuildConfig:
+def load_config(
+    toml_path: Path | None = None,
+    env: Mapping[str, str] | None = None,
+    cli: Mapping[str, Any] | None = None,
+) -> BuildConfig:
     values: dict[str, Any] = {}
     if toml_path is not None and toml_path.is_file():
         try:

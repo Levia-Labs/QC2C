@@ -90,7 +90,9 @@ def test_precedence(tmp_path: Path):
     toml.write_text("tolerance = 0.1\n", encoding="utf-8")
     assert load_config(toml, env={}).tolerance == 0.1
     assert load_config(toml, env={"QC2C_TOLERANCE": "0.2"}).tolerance == 0.2
-    assert load_config(toml, env={"QC2C_TOLERANCE": "0.2"}, cli={"tolerance": "0.3"}).tolerance == 0.3
+    assert (
+        load_config(toml, env={"QC2C_TOLERANCE": "0.2"}, cli={"tolerance": "0.3"}).tolerance == 0.3
+    )
 
 
 def test_cli_none_keeps_lower_layers():
@@ -110,8 +112,17 @@ def test_unknown_toml_key(tmp_path: Path):
         load_config(toml, env={})
 
 
-@pytest.mark.parametrize("bad", [{"sea": "ocean"}, {"out": "../x"}, {"decimals": 9}, {"tolerance": -1},
-                                 {"samples": 0}, {"min_border_accuracy": 1.5}])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"sea": "ocean"},
+        {"out": "../x"},
+        {"decimals": 9},
+        {"tolerance": -1},
+        {"samples": 0},
+        {"min_border_accuracy": 1.5},
+    ],
+)
 def test_invalid_values(bad):
     with pytest.raises(ConfigError):
         BuildConfig(**bad)
@@ -139,6 +150,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'qc2c_build.config'`
 
 ```python
 """Build settings: defaults, then qc2c.toml, then QC2C_* environment variables, then CLI flags."""
+
 from __future__ import annotations
 
 import os
@@ -227,8 +239,11 @@ def _coerce(name: str, value: Any) -> Any:
         raise ConfigError(f"{name}: cannot read {value!r}") from error
 
 
-def load_config(toml_path: Path | None = None, env: Mapping[str, str] | None = None,
-                cli: Mapping[str, Any] | None = None) -> BuildConfig:
+def load_config(
+    toml_path: Path | None = None,
+    env: Mapping[str, str] | None = None,
+    cli: Mapping[str, Any] | None = None,
+) -> BuildConfig:
     values: dict[str, Any] = {}
     if toml_path is not None and toml_path.is_file():
         data = tomllib.loads(toml_path.read_text(encoding="utf-8"))

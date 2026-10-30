@@ -5,10 +5,25 @@ from qc2c_build.cli import main
 
 
 def args(cfg, *extra):
-    return ["--config", "none.toml", "--input-dir", str(cfg.input_dir), "--output-dir", str(cfg.output_dir),
-            "--packages-dir", str(cfg.packages_dir), "--web-dir", str(cfg.web_dir),
-            "--presimplify", "0", "--voronoi-spacing", "1",
-            "--samples", "10", *extra]
+    return [
+        "--config",
+        "none.toml",
+        "--input-dir",
+        str(cfg.input_dir),
+        "--output-dir",
+        str(cfg.output_dir),
+        "--packages-dir",
+        str(cfg.packages_dir),
+        "--web-dir",
+        str(cfg.web_dir),
+        "--presimplify",
+        "0",
+        "--voronoi-spacing",
+        "1",
+        "--samples",
+        "10",
+        *extra,
+    ]
 
 
 def test_cli_build_validate_publish_compare(world, capsys):
@@ -108,7 +123,9 @@ def test_cli_validate_names_fixture_missing_codes(world, monkeypatch, capsys):
     import qc2c_build.cli as cli
 
     real = cli.run_validation
-    monkeypatch.setattr(cli, "run_validation", lambda cfg: {**real(cfg), "fixture_missing": ["ZZZ", "YYY"]})
+    monkeypatch.setattr(
+        cli, "run_validation", lambda cfg: {**real(cfg), "fixture_missing": ["ZZZ", "YYY"]}
+    )
     assert main(["build", *args(world)]) == 0
     capsys.readouterr()
     main(["validate", *args(world)])

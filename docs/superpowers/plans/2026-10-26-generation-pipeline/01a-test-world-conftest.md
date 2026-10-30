@@ -2,6 +2,7 @@
 
 ```python
 """Synthetic world shared by the pipeline tests. Coordinates are GeoJSON [lng, lat]."""
+
 from __future__ import annotations
 
 import json
@@ -16,7 +17,10 @@ from qc2c_build.config import BuildConfig
 settings.register_profile("readonly", database=None)
 settings.load_profile("readonly")
 
-TWO_SECTORS = {"world_sector_1.json": [0, -180, 90, 180], "world_sector_2.json": [-90, -180, 0, 180]}
+TWO_SECTORS = {
+    "world_sector_1.json": [0, -180, 90, 180],
+    "world_sector_2.json": [-90, -180, 0, 180],
+}
 
 
 def square(x0: float, y0: float, x1: float, y1: float) -> list[list[float]]:
@@ -32,8 +36,13 @@ def feature(code: str, name: str, *polygons: list[list[list[float]]]) -> dict:
     return {"type": "Feature", "properties": {"ADMIN": name, "ISO_A3": code}, "geometry": geometry}
 
 
-def write_inputs(folder: Path, countries: list[dict], states: list[dict] | None = None,
-                 overrides: dict | None = None, sectors: dict | None = None) -> None:
+def write_inputs(
+    folder: Path,
+    countries: list[dict],
+    states: list[dict] | None = None,
+    overrides: dict | None = None,
+    sectors: dict | None = None,
+) -> None:
     folder.mkdir(parents=True, exist_ok=True)
     collections = {"countries.json": countries, "us_states.json": states or []}
     for name, features in collections.items():
@@ -60,6 +69,12 @@ def world(tmp_path: Path) -> BuildConfig:
     a country spanning the equator (the sector edge) and a '-99' entry."""
     inputs = tmp_path / "input"
     write_inputs(inputs, WORLD_FEATURES, overrides={"Nowhere": "NWH"})
-    return BuildConfig(input_dir=inputs, output_dir=tmp_path / "output", packages_dir=tmp_path / "packages",
-                       presimplify=0.0, voronoi_spacing=1.0, samples=10)
+    return BuildConfig(
+        input_dir=inputs,
+        output_dir=tmp_path / "output",
+        packages_dir=tmp_path / "packages",
+        presimplify=0.0,
+        voronoi_spacing=1.0,
+        samples=10,
+    )
 ```
