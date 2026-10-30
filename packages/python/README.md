@@ -58,12 +58,12 @@ Browser use from another domain needs the host to send CORS headers; until then,
 
 ## API
 
-| Function | Returns |
-| --- | --- |
+| Function                              | Returns                                                                                                                      |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `coordinates_to_country(coordinates)` | Country code from the bundled data, or `None` when the coordinates fall outside [-90, 90] latitude or [-180, 180] longitude. |
-| `get_sector(manifest, coordinates)` | Key of the first sector whose bounding box contains the point, or `None`. |
-| `get_country(sector, coordinates)` | Key of the first country polygon in the sector that contains the point, or `None`. |
-| `point_in_polygon(point, polygon)` | `True` when `[lat, lng]` lies inside the polygon (ray casting). |
+| `get_sector(manifest, coordinates)`   | Key of the first sector whose bounding box contains the point, or `None`.                                                    |
+| `get_country(sector, coordinates)`    | Key of the first country polygon in the sector that contains the point, or `None`.                                           |
+| `point_in_polygon(point, polygon)`    | `True` when `[lat, lng]` lies inside the polygon (ray casting).                                                              |
 
 `coordinates` is a dict with `lat` and `lng` keys in decimal degrees.
 

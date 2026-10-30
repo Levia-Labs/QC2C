@@ -1,9 +1,11 @@
 # Task 5: Sectors, rings and output files
 
 **Files:**
+
 - Create: `workflow/src/qc2c_build/sectors.py`, `workflow/src/qc2c_build/write.py`, `workflow/src/qc2c_build/pipeline.py`, `workflow/tests/test_sectors.py`, `workflow/tests/test_pipeline.py`
 
 **Interfaces:**
+
 - Consumes: Tasks 1 to 4.
 - Produces: `sectors.Sectors = dict[str, list[float]]`, `sectors.read_sectors(path) -> Sectors` (raises `ConfigError`), `sectors.check_tiling(sectors)`, `sectors.sector_box(bounds) -> Polygon`, `sectors.ring_coords(polygon, decimals) -> list[list[float]]`, `sectors.split_into_sectors(parts, land, sectors, decimals) -> tuple[dict[str, dict[str, list]], dict[str, dict]]`; `write.dump(data) -> bytes`, `write.write_build(cfg, files, manifest, meta) -> dict`; `pipeline.run_build(cfg) -> dict` (the `build.json` content).
 

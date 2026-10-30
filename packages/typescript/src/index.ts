@@ -14,10 +14,7 @@ import pointInPolygon from "point-in-polygon";
  * @param coordinates - Coordinates as LatLng object.
  * @returns Sector key string if found; otherwise null.
  */
-export const getSector = (
-  sectors_manifest: object,
-  coordinates: LatLng
-): string | null => {
+export const getSector = (sectors_manifest: object, coordinates: LatLng): string | null => {
   // Iterate through each sector entry in the manifest
   for (const [key, bounds] of Object.entries(sectors_manifest)) {
     // Destructure the bounding box into min/max latitudes and longitudes
@@ -52,10 +49,7 @@ export const getSector = (
  * @param coordinates - Coordinates as LatLng object.
  * @returns Country key string if found; otherwise null.
  */
-export const getCountry = (
-  sector_manifest: object,
-  coordinates: LatLng
-): string | null => {
+export const getCountry = (sector_manifest: object, coordinates: LatLng): string | null => {
   // Represent coordinate as an array to match point-in-polygon input format
   const point = [coordinates.lat, coordinates.lng];
 
@@ -93,7 +87,7 @@ export const coordinatesToCountry = async (
   urls = {
     manifest: "/",
     sectors: "/",
-  }
+  },
 ): Promise<string | null> => {
   try {
     // Fetch the world sector manifest file

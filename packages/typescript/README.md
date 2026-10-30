@@ -19,10 +19,10 @@ import { getSector, getCountry } from "qc2c";
 import manifest from "qc2c/dist/data/json/world_sectors.json";
 
 const point = { lat: 52.23, lng: 21.01 };
-const sectorKey = getSector(manifest, point);           // "world_sector_2.json.gz"
-const file = sectorKey!.replace(/\.gz$/, "");            // sector keys name the gzipped files
+const sectorKey = getSector(manifest, point); // "world_sector_2.json.gz"
+const file = sectorKey!.replace(/\.gz$/, ""); // sector keys name the gzipped files
 const sector = await import(`qc2c/dist/data/json/${file}`);
-getCountry(sector.default ?? sector, point);             // "POL"
+getCountry(sector.default ?? sector, point); // "POL"
 ```
 
 ## Use in the browser
@@ -48,7 +48,10 @@ import { coordinatesToCountry } from "qc2c";
 
 const code = await coordinatesToCountry(
   { lat: 52.23, lng: 21.01 },
-  { manifest: "https://www.levialabs.net/assets/qc2c/world_sectors.json", sectors: "https://www.levialabs.net/assets/qc2c" },
+  {
+    manifest: "https://www.levialabs.net/assets/qc2c/world_sectors.json",
+    sectors: "https://www.levialabs.net/assets/qc2c",
+  },
 );
 // "POL"
 ```
@@ -57,11 +60,11 @@ Browser use from another domain needs the host to send CORS headers; until then,
 
 ## API
 
-| Function | Returns |
-| --- | --- |
+| Function                                  | Returns                                                                                                                                                                            |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `coordinatesToCountry(coordinates, urls)` | Fetches the manifest and one sector file, then returns the country code, or `null` when the coordinates fall outside [-90, 90] latitude or [-180, 180] longitude or a fetch fails. |
-| `getSector(manifest, coordinates)` | Key of the first sector whose bounding box contains the point, or `null`. |
-| `getCountry(sector, coordinates)` | Key of the first country polygon in the sector that contains the point, or `null`. |
+| `getSector(manifest, coordinates)`        | Key of the first sector whose bounding box contains the point, or `null`.                                                                                                          |
+| `getCountry(sector, coordinates)`         | Key of the first country polygon in the sector that contains the point, or `null`.                                                                                                 |
 
 `coordinates` is `{ lat, lng }` in decimal degrees.
 

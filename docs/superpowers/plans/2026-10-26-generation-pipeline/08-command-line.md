@@ -1,9 +1,11 @@
 # Task 8: Command line
 
 **Files:**
+
 - Create: `workflow/src/qc2c_build/cli.py`, `workflow/tests/test_cli.py`
 
 **Interfaces:**
+
 - Consumes: `load_config`, `ConfigError`, `run_build`, `run_validation`, `publish`, `compare`, `PublishError`, `render`, `DEFAULTS`.
 - Produces: `cli.main(argv: list[str] | None = None) -> int` (0 ok, 1 check failed, 2 usage or input error); console script `qc2c-build`.
 

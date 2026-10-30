@@ -18,9 +18,15 @@ const lookup = ({ lat, lng }) => {
 
 describe("getSector", () => {
   const bare = { a: [0, 0, 5, 5], b: [6, 6, 10, 10] };
-  const wrapped = { a: { bounds: [0, 0, 5, 5], center: {} }, b: { bounds: [6, 6, 10, 10], center: {} } };
+  const wrapped = {
+    a: { bounds: [0, 0, 5, 5], center: {} },
+    b: { bounds: [6, 6, 10, 10], center: {} },
+  };
 
-  test.each([["bare", bare], ["wrapped", wrapped]])("%s bounds", (_, manifest) => {
+  test.each([
+    ["bare", bare],
+    ["wrapped", wrapped],
+  ])("%s bounds", (_, manifest) => {
     expect(getSector(manifest, { lat: 3, lng: 3 })).toBe("a");
     expect(getSector(manifest, { lat: 7, lng: 7 })).toBe("b");
     expect(getSector(manifest, { lat: 11, lng: 11 })).toBeNull();
@@ -28,12 +34,35 @@ describe("getSector", () => {
 });
 
 describe("getCountry", () => {
-  const square = [[0, 0], [0, 2], [2, 2], [2, 0]];
-  const far = [[6, 6], [6, 10], [10, 10], [10, 6]];
+  const square = [
+    [0, 0],
+    [0, 2],
+    [2, 2],
+    [2, 0],
+  ];
+  const far = [
+    [6, 6],
+    [6, 10],
+    [10, 10],
+    [10, 6],
+  ];
 
   test.each([
     ["polygon", { A: square, B: far }],
-    ["multipolygon", { A: [square], B: [[[20, 20], [20, 21], [21, 21]], far] }],
+    [
+      "multipolygon",
+      {
+        A: [square],
+        B: [
+          [
+            [20, 20],
+            [20, 21],
+            [21, 21],
+          ],
+          far,
+        ],
+      },
+    ],
   ])("%s", (_, manifest) => {
     expect(getCountry(manifest, { lat: 1, lng: 1 })).toBe("A");
     expect(getCountry(manifest, { lat: 7, lng: 7 })).toBe("B");

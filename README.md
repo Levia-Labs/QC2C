@@ -75,12 +75,12 @@ The project takes no political position. It does not move borders or decide who 
 
 ## Repository
 
-| Path | What is there |
-| --- | --- |
-| [packages/python](packages/python) | PyPI package |
-| [packages/typescript](packages/typescript) | npm package |
-| [workflow](workflow) | Pipeline that builds and validates the sector files |
-| [docs](docs) | Repository documentation |
+| Path                                       | What is there                                       |
+| ------------------------------------------ | --------------------------------------------------- |
+| [packages/python](packages/python)         | PyPI package                                        |
+| [packages/typescript](packages/typescript) | npm package                                         |
+| [workflow](workflow)                       | Pipeline that builds and validates the sector files |
+| [docs](docs)                               | Repository documentation                            |
 
 Everything runs in Docker through [Task](https://taskfile.dev): `task workflow:build`, `task workflow:validate`, `task workflow:publish` and `task workflow:test`. A machine needs only Docker and Task. Shared tooling comes from Crepidoma, checked out as a submodule:
 
