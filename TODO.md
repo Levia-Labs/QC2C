@@ -9,7 +9,7 @@ Crepidoma scripts/gate_runner.py:77 print(line) raises UnicodeEncodeError for U+
 
 ## 2 Host jest cannot resolve jest-circus runner on Windows
 
-status: open
+status: done
 class: bug
 
 node packages/typescript/node_modules/jest/bin/jest.js run from packages/typescript reports 'Module ...jest-circus/build/runner.js in the testRunner option was not found' although the file exists; npm test also lacks .cmd shims after the Docker install. Blocks a host local:node task; TypeScript tests stay on workflow:test-node.

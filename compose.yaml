@@ -71,6 +71,9 @@ services:
     volumes:
       - ./packages/typescript:/packages/typescript
       - ./packages/fixtures:/packages/fixtures:ro
+    # Keeps the Linux-only node_modules out of the host tree (host jest cannot load it).
+    tmpfs:
+      - /packages/typescript/node_modules:uid=${QC2C_UID:-1000},gid=${QC2C_GID:-1000},mode=0755,size=1g,exec
     working_dir: /packages/typescript
     environment:
       npm_config_cache: /tmp/npm-cache
