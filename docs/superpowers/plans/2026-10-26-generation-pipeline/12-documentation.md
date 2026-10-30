@@ -1,6 +1,7 @@
 # Task 12: Documentation
 
 **Files:**
+
 - Modify: `README.md`, `workflow/README.md`, `packages/python/README.md`, `packages/typescript/README.md`, `workflow/data/input/README.md`, `workflow/data/output/README.md`, `CLAUDE.md`
 
 - [ ] **Step 1: Root README**
@@ -29,7 +30,7 @@ In `## Quick start`, change the Python ocean example comment to `# nearest count
 
 - [ ] **Step 2: Rewrite `workflow/README.md`**
 
-```markdown
+````markdown
 # Workflow
 
 `qc2c-build` turns source country borders into the sector files shipped by the [Python](../packages/python/README.md) and [TypeScript](../packages/typescript/README.md) packages, then proves the result still matches the source.
@@ -45,6 +46,7 @@ task workflow:publish                # copies it into both packages and rebuilds
 task workflow:test                   # pipeline, Python and Node suites in parallel
 task workflow:preview                # draws latest/preview.png
 ```
+````
 
 Pass settings after `--`, for example `task workflow:build -- --tolerance 0.1 --out coarse`, then `task workflow:validate -- --tolerance 0.1 --out coarse`.
 
@@ -60,21 +62,21 @@ Pass settings after `--`, for example `task workflow:build -- --tolerance 0.1 --
 
 Defaults live in [qc2c.toml](qc2c.toml). Environment variables `QC2C_<NAME>` override them, and flags override both.
 
-| Flag | Default | Meaning |
-| --- | --- | --- |
-| `--tolerance` | 0.05 | Border simplification in degrees |
-| `--decimals` | 3 | Coordinate decimals in the output |
-| `--presimplify` | 0.01 | Simplification before the sea partition |
-| `--voronoi-spacing` | 0.25 | Coastline sampling for the sea partition, degrees |
-| `--sea` | nearest | `nearest`, or `distance` to return no country far from land |
-| `--sea-distance-km` | 200 | Distance limit for `--sea distance` |
-| `--us-states` / `--no-us-states` | off | Return US state codes instead of `USA` |
-| `--sectors` | world_sectors.json | Sector boxes, which must tile the world |
-| `--overrides` | code_overrides.json | Codes for areas without an ISO code |
-| `--out` | latest | Output folder name |
-| `--samples` | 40 | Random interior test points per country |
-| `--min-border-accuracy` | see qc2c.toml | Required accuracy near borders |
-| `--seed` | 1 | Seed for test points |
+| Flag                             | Default             | Meaning                                                     |
+| -------------------------------- | ------------------- | ----------------------------------------------------------- |
+| `--tolerance`                    | 0.05                | Border simplification in degrees                            |
+| `--decimals`                     | 3                   | Coordinate decimals in the output                           |
+| `--presimplify`                  | 0.01                | Simplification before the sea partition                     |
+| `--voronoi-spacing`              | 0.25                | Coastline sampling for the sea partition, degrees           |
+| `--sea`                          | nearest             | `nearest`, or `distance` to return no country far from land |
+| `--sea-distance-km`              | 200                 | Distance limit for `--sea distance`                         |
+| `--us-states` / `--no-us-states` | off                 | Return US state codes instead of `USA`                      |
+| `--sectors`                      | world_sectors.json  | Sector boxes, which must tile the world                     |
+| `--overrides`                    | code_overrides.json | Codes for areas without an ISO code                         |
+| `--out`                          | latest              | Output folder name                                          |
+| `--samples`                      | 40                  | Random interior test points per country                     |
+| `--min-border-accuracy`          | see qc2c.toml       | Required accuracy near borders                              |
+| `--seed`                         | 1                   | Seed for test points                                        |
 
 ## Validation
 
@@ -87,7 +89,8 @@ uv run --project workflow --all-extras qc2c-build build --input-dir workflow/dat
 ```
 
 Only the Docker build is the reference; `task workflow:check` compares the package data with it.
-```
+
+````
 
 - [ ] **Step 3: Package READMEs**
 
@@ -95,7 +98,7 @@ In both `packages/python/README.md` and `packages/typescript/README.md`, replace
 
 ```markdown
 2. Points at sea return the nearest country, and United States points return `USA`.
-```
+````
 
 and add note 4:
 

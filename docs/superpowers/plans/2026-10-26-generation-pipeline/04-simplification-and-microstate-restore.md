@@ -1,9 +1,11 @@
 # Task 4: Simplification and microstate restore
 
 **Files:**
+
 - Create: `workflow/src/qc2c_build/simplify.py`, `workflow/tests/test_simplify.py`
 
 **Interfaces:**
+
 - Consumes: `Feature`, `polygonal`, `build_partition`, `BuildConfig`.
 - Produces: `simplify.simplify_partition(parts, cfg) -> list[Feature]`, `simplify.restore_lost(original, simplified, grid, keep=0.5) -> list[Feature]`.
 

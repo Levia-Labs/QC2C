@@ -1,10 +1,12 @@
 # Task 1: Project scaffold and settings
 
 **Files:**
+
 - Create: `workflow/pyproject.toml`, `workflow/qc2c.toml`, `workflow/src/qc2c_build/__init__.py`, `workflow/src/qc2c_build/config.py`, `workflow/tests/conftest.py`, `workflow/tests/test_config.py`
 - Modify: `docs/superpowers/specs/2026-10-26-generation-pipeline-design.md` (Validation section band formula, Tasks table)
 
 **Interfaces:**
+
 - Produces: `BuildConfig` (frozen dataclass, fields below, properties `build_dir`, methods `input_file(name) -> Path`, `as_dict() -> dict`), `ConfigError(ValueError)`, `DEFAULTS: BuildConfig`, `load_config(toml_path: Path | None, env: Mapping[str, str] | None = None, cli: Mapping[str, Any] | None = None) -> BuildConfig`. Test helpers in `conftest.py`: `square`, `feature`, `write_inputs`, `TWO_SECTORS`, fixture `world -> BuildConfig`.
 
 - [ ] **Step 1: Write `workflow/pyproject.toml`**
@@ -269,7 +271,7 @@ Expected: all PASS.
 In `docs/superpowers/specs/2026-10-26-generation-pipeline-design.md`, Validation section, replace the paragraph that starts `Each point is classified by its distance` and its three-item list with:
 
 ```markdown
-Each point is classified by its distance `d` to the nearest source geometry of a *different* code (source coverage after overrides):
+Each point is classified by its distance `d` to the nearest source geometry of a _different_ code (source coverage after overrides):
 
 1. "Ambiguous" when `d < 1e-9`: the point lies on a shared border and belongs to both codes. Not scored.
 2. "Core" when `d` exceeds `2 * (presimplify + tolerance + 10^-decimals + 0.001) + voronoi_spacing / 2`. The doubling and the spacing term cover sea that the Voronoi step can hand to a neighbour within one boundary spacing.

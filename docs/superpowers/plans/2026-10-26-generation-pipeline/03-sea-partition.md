@@ -1,9 +1,11 @@
 # Task 3: Sea partition
 
 **Files:**
+
 - Create: `workflow/src/qc2c_build/partition.py`, `workflow/tests/test_partition.py`
 
 **Interfaces:**
+
 - Consumes: `Feature`, `load_features` (Task 2), `polygonal` (Task 2), `BuildConfig` (Task 1).
 - Produces: `partition.WORLD` (box -180..180, -90..90), `partition.SNAP = 1e-3`, `partition.KM_PER_DEGREE = 111.32`, `partition.presimplified(features, tolerance) -> list[Feature]`, `partition.build_partition(features, cfg) -> list[Feature]` (same order and codes as input).
 

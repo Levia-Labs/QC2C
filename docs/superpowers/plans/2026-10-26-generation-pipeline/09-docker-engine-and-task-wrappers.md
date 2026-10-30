@@ -1,11 +1,13 @@
 # Task 9: Docker engine and Task wrappers
 
 **Files:**
+
 - Create: `workflow/Dockerfile`, `workflow/.dockerignore`, `compose.yaml`, `tasks/workflow.yml`, `workflow/data/output/.gitignore`
 - Modify: `Taskfile.yml` (includes), `docs/folder-purposes.toml`
 - Delete: `workflow/scripts/`, `workflow/test/`, `workflow/data/output/stage_1/` to `stage_4/`, `workflow/.gitignore`
 
 **Interfaces:**
+
 - Consumes: console script `qc2c-build` (Task 8).
 - Produces: Compose services `build`, `validate`, `publish`, `preview`, `test-pipeline`, `test-python`, `test-node`; tasks `workflow:image`, `workflow:build`, `workflow:validate`, `workflow:publish`, `workflow:check`, `workflow:preview`, `workflow:test`, `workflow:test-pipeline`, `workflow:test-python`, `workflow:test-node`.
 
@@ -217,7 +219,7 @@ tasks:
 In `Taskfile.yml`, add under `includes:` after `setup: .crepidoma/taskfiles/setup`:
 
 ```yaml
-  workflow: ./tasks/workflow.yml
+workflow: ./tasks/workflow.yml
 ```
 
 - [ ] **Step 5: Remove the old pipeline**

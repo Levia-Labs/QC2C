@@ -25,7 +25,7 @@
 
 ## Spec amendments made by this plan
 
-1. **Core band.** The spec's band `presimplify + tolerance + 10^-decimals + 0.001` does not cover the Voronoi step: sea next to country A can go to country B when B is within about one boundary spacing. The plan uses `2 * (presimplify + tolerance + 10^-decimals + 0.001) + voronoi_spacing / 2`, measured as the distance to the nearest *other* code's source geometry. Task 1 updates the spec.
+1. **Core band.** The spec's band `presimplify + tolerance + 10^-decimals + 0.001` does not cover the Voronoi step: sea next to country A can go to country B when B is within about one boundary spacing. The plan uses `2 * (presimplify + tolerance + 10^-decimals + 0.001) + voronoi_spacing / 2`, measured as the distance to the nearest _other_ code's source geometry. Task 1 updates the spec.
 2. **Holes.** Instead of relying on area ordering for enclaves, the writer cuts every polygon with holes into hole-free pieces, so first-match lookup is exact whatever the order. Area ordering stays.
 3. **Task names.** The Crepidoma submodule already owns the `test` namespace, so the parallel test task is `task workflow:test`, not `task test`. `task workflow:check` compares the latest build with the shipped package data instead of building a second copy.
 4. **Modules.** Three small modules are added to the spec's list: `geom.py` (shared polygon helpers), `pipeline.py` (build orchestration) and a `compare` command inside `publish.py`.
@@ -40,30 +40,30 @@
 
 ## File structure
 
-| Path | Responsibility |
-| --- | --- |
-| `workflow/pyproject.toml`, `workflow/uv.lock` | Build project, dependencies, `qc2c-build` script |
-| `workflow/qc2c.toml` | Checked-in default settings |
-| `workflow/src/qc2c_build/config.py` | `BuildConfig`, settings precedence, validation |
-| `workflow/src/qc2c_build/geom.py` | `polygonal`, `hole_free` |
-| `workflow/src/qc2c_build/load.py` | Source loading, overrides, USA or states, overlap removal |
-| `workflow/src/qc2c_build/partition.py` | Nearest-country sea partition |
-| `workflow/src/qc2c_build/simplify.py` | Coverage simplification, grid snapping, microstate restore |
-| `workflow/src/qc2c_build/sectors.py` | Sector file reading, tiling check, clipping, rings, centers |
-| `workflow/src/qc2c_build/write.py` | JSON, gzip and `build.json` output |
-| `workflow/src/qc2c_build/pipeline.py` | `run_build` |
-| `workflow/src/qc2c_build/validate.py` | Point set, classification, lookup, report, fixture |
-| `workflow/src/qc2c_build/publish.py` | `publish`, `compare` |
-| `workflow/src/qc2c_build/preview.py` | Headless PNG preview |
-| `workflow/src/qc2c_build/cli.py` | `qc2c-build` subcommands |
-| `workflow/tests/*.py` | Synthetic-world unit, property and end-to-end tests |
-| `workflow/data/input/code_overrides.json` | `-99` code overrides |
-| `workflow/Dockerfile`, `workflow/.dockerignore`, `compose.yaml` | Engine |
-| `tasks/workflow.yml` | Task wrappers |
-| `packages/fixtures/points.json` | Shared library fixture, written by publish |
-| `packages/python/tests/test_fixture.py`, `packages/typescript/tests/fixture.test.js` | Library fixture tests |
-| `.github/workflows/ci.yml` | Pull request gate |
-| `CHANGELOG.md` | 2.0.0 notes |
+| Path                                                                                 | Responsibility                                              |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `workflow/pyproject.toml`, `workflow/uv.lock`                                        | Build project, dependencies, `qc2c-build` script            |
+| `workflow/qc2c.toml`                                                                 | Checked-in default settings                                 |
+| `workflow/src/qc2c_build/config.py`                                                  | `BuildConfig`, settings precedence, validation              |
+| `workflow/src/qc2c_build/geom.py`                                                    | `polygonal`, `hole_free`                                    |
+| `workflow/src/qc2c_build/load.py`                                                    | Source loading, overrides, USA or states, overlap removal   |
+| `workflow/src/qc2c_build/partition.py`                                               | Nearest-country sea partition                               |
+| `workflow/src/qc2c_build/simplify.py`                                                | Coverage simplification, grid snapping, microstate restore  |
+| `workflow/src/qc2c_build/sectors.py`                                                 | Sector file reading, tiling check, clipping, rings, centers |
+| `workflow/src/qc2c_build/write.py`                                                   | JSON, gzip and `build.json` output                          |
+| `workflow/src/qc2c_build/pipeline.py`                                                | `run_build`                                                 |
+| `workflow/src/qc2c_build/validate.py`                                                | Point set, classification, lookup, report, fixture          |
+| `workflow/src/qc2c_build/publish.py`                                                 | `publish`, `compare`                                        |
+| `workflow/src/qc2c_build/preview.py`                                                 | Headless PNG preview                                        |
+| `workflow/src/qc2c_build/cli.py`                                                     | `qc2c-build` subcommands                                    |
+| `workflow/tests/*.py`                                                                | Synthetic-world unit, property and end-to-end tests         |
+| `workflow/data/input/code_overrides.json`                                            | `-99` code overrides                                        |
+| `workflow/Dockerfile`, `workflow/.dockerignore`, `compose.yaml`                      | Engine                                                      |
+| `tasks/workflow.yml`                                                                 | Task wrappers                                               |
+| `packages/fixtures/points.json`                                                      | Shared library fixture, written by publish                  |
+| `packages/python/tests/test_fixture.py`, `packages/typescript/tests/fixture.test.js` | Library fixture tests                                       |
+| `.github/workflows/ci.yml`                                                           | Pull request gate                                           |
+| `CHANGELOG.md`                                                                       | 2.0.0 notes                                                 |
 
 Removed: `workflow/scripts/`, `workflow/test/`, `workflow/data/output/stage_1..4/`, `workflow/.gitignore` (replaced).
 

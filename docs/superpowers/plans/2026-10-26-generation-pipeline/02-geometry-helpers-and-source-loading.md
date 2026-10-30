@@ -1,9 +1,11 @@
 # Task 2: Geometry helpers and source loading
 
 **Files:**
+
 - Create: `workflow/src/qc2c_build/geom.py`, `workflow/src/qc2c_build/load.py`, `workflow/data/input/code_overrides.json`, `workflow/tests/test_load.py`, `workflow/tests/test_geom.py`
 
 **Interfaces:**
+
 - Consumes: `BuildConfig`, `ConfigError` (Task 1).
 - Produces: `geom.EMPTY`, `geom.polygonal(geom) -> BaseGeometry` (Polygon or MultiPolygon or empty), `geom.hole_free(geom) -> list[Polygon]`; `load.Feature = tuple[str, BaseGeometry]`, `load.MissingOverride(ConfigError)`, `load.US_TERRITORIES: dict[str, str]`, `load.read_json(path) -> dict`, `load.resolve_code(properties, overrides) -> str`, `load.load_features(cfg) -> list[Feature]` (sorted by code, non-overlapping).
 

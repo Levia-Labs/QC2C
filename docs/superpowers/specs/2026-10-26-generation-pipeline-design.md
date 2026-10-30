@@ -19,12 +19,12 @@ Replace the staged scripts in `workflow/scripts` with one parametrized build tha
 
 Taken with throwaway probes on 40 random interior points per source feature (small features count as much as large ones).
 
-| Method | gzip | Sample accuracy | Area-weighted |
-| --- | --- | --- | --- |
-| Shipped data today | 308 KB | 89.98% | not measured |
-| Coverage simplify, real coastlines, tol 0.05 | 543 KB | 92.01% | not measured |
-| Nearest-country sea partition, tol 0.05 | 222 KB | 97.80% | 99.962% |
-| Nearest-country sea partition, tol 0.1 | 163 KB | 97.29% | 99.936% |
+| Method                                       | gzip   | Sample accuracy | Area-weighted |
+| -------------------------------------------- | ------ | --------------- | ------------- |
+| Shipped data today                           | 308 KB | 89.98%          | not measured  |
+| Coverage simplify, real coastlines, tol 0.05 | 543 KB | 92.01%          | not measured  |
+| Nearest-country sea partition, tol 0.05      | 222 KB | 97.80%          | 99.962%       |
+| Nearest-country sea partition, tol 0.1       | 163 KB | 97.29%          | 99.936%       |
 
 Failures in today's data come from convex-hull merging (San Marino and Vatican return ITA, Monaco FRA, Liechtenstein CHE), 17 `-99` entries overwriting each other, Alaska deleted at `stage_1/main.py:187`, and US territory codes overlapping ISO entries.
 
@@ -32,17 +32,17 @@ Failures in today's data come from convex-hull merging (San Marino and Vatican r
 
 `workflow/` becomes a uv project (`workflow/pyproject.toml`, `workflow/uv.lock`) with the package `workflow/src/qc2c_build/` and the console script `qc2c-build`. Runtime dependencies: `shapely>=2.1,<3`, `numpy`. Optional `preview` extra: `matplotlib`. Every module stays under 300 lines.
 
-| Module | Responsibility |
-| --- | --- |
-| `config.py` | `BuildConfig` dataclass; merges defaults, `workflow/qc2c.toml`, `QC2C_*` environment variables and CLI flags, in that order of increasing precedence; validates that sector boxes tile the world. |
-| `load.py` | Reads GeoJSON inputs, applies the override file, chooses USA or states, repairs geometry with `make_valid`, dissolves features sharing a code. |
-| `partition.py` | Pre-simplifies the land coverage, assigns sea to the nearest country through Voronoi cells of densified boundary points, optionally clips sea to a distance from land. |
-| `simplify.py` | `coverage_simplify` at the configured tolerance, then `set_precision` to the configured decimals, then validity repair. |
-| `sectors.py` | Clips the partition to each sector box, orders countries by ascending area so enclaves win first-match lookup, computes one center per country per sector from the representative point of its land. |
-| `write.py` | Writes the manifest and sector files as JSON and gzip plus `build.json` to the output folder. |
-| `validate.py` | Builds the point set, checks the output, writes `validation.json` and the shared library fixture. |
-| `publish.py` | Copies the latest build into both packages. |
-| `cli.py` | Subcommands `build`, `validate`, `publish`, `preview`. |
+| Module         | Responsibility                                                                                                                                                                                       |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config.py`    | `BuildConfig` dataclass; merges defaults, `workflow/qc2c.toml`, `QC2C_*` environment variables and CLI flags, in that order of increasing precedence; validates that sector boxes tile the world.    |
+| `load.py`      | Reads GeoJSON inputs, applies the override file, chooses USA or states, repairs geometry with `make_valid`, dissolves features sharing a code.                                                       |
+| `partition.py` | Pre-simplifies the land coverage, assigns sea to the nearest country through Voronoi cells of densified boundary points, optionally clips sea to a distance from land.                               |
+| `simplify.py`  | `coverage_simplify` at the configured tolerance, then `set_precision` to the configured decimals, then validity repair.                                                                              |
+| `sectors.py`   | Clips the partition to each sector box, orders countries by ascending area so enclaves win first-match lookup, computes one center per country per sector from the representative point of its land. |
+| `write.py`     | Writes the manifest and sector files as JSON and gzip plus `build.json` to the output folder.                                                                                                        |
+| `validate.py`  | Builds the point set, checks the output, writes `validation.json` and the shared library fixture.                                                                                                    |
+| `publish.py`   | Copies the latest build into both packages.                                                                                                                                                          |
+| `cli.py`       | Subcommands `build`, `validate`, `publish`, `preview`.                                                                                                                                               |
 
 The old `workflow/scripts/`, `workflow/test/` and `workflow/data/output/stage_1..4` are removed; git history keeps them.
 
@@ -69,42 +69,42 @@ Unchanged, so the libraries keep working:
 
 `workflow/data/input/code_overrides.json` maps source `ADMIN` names to output codes. Defaults follow the source data: territories of a sovereign state take its ISO code, disputed areas keep Natural Earth's own non-ISO codes, and Kosovo uses `XKX`.
 
-| ADMIN | Code |
-| --- | --- |
-| Ashmore and Cartier Islands, Coral Sea Islands, Indian Ocean Territories | AUS |
-| Clipperton Island | FRA |
-| Dhekelia Sovereign Base Area, Akrotiri Sovereign Base Area | GBR |
-| Baykonur Cosmodrome | KAZ |
-| US Naval Base Guantanamo Bay | CUB |
-| Kosovo | XKX |
-| Northern Cyprus | CYN |
-| Cyprus No Mans Area | CNM |
-| Somaliland | SOL |
-| Siachen Glacier | KAS |
-| Spratly Islands | PGA |
-| Scarborough Reef | SCR |
-| Bajo Nuevo Bank (Petrel Is.) | BJN |
-| Serranilla Bank | SER |
+| ADMIN                                                                    | Code |
+| ------------------------------------------------------------------------ | ---- |
+| Ashmore and Cartier Islands, Coral Sea Islands, Indian Ocean Territories | AUS  |
+| Clipperton Island                                                        | FRA  |
+| Dhekelia Sovereign Base Area, Akrotiri Sovereign Base Area               | GBR  |
+| Baykonur Cosmodrome                                                      | KAZ  |
+| US Naval Base Guantanamo Bay                                             | CUB  |
+| Kosovo                                                                   | XKX  |
+| Northern Cyprus                                                          | CYN  |
+| Cyprus No Mans Area                                                      | CNM  |
+| Somaliland                                                               | SOL  |
+| Siachen Glacier                                                          | KAS  |
+| Spratly Islands                                                          | PGA  |
+| Scarborough Reef                                                         | SCR  |
+| Bajo Nuevo Bank (Petrel Is.)                                             | BJN  |
+| Serranilla Bank                                                          | SER  |
 
 The build fails if any `-99` entry has no override. With `--us-states`, the state file's territory entries (`PR`, `VI`, `GU`, `AS`, `MP`) are dropped in favor of the ISO entries `PRI`, `VIR`, `GUM`, `ASM`, `MNP`, and the `USA` country entry is replaced by the remaining states.
 
 ## Settings
 
-| Setting | Flag | Default |
-| --- | --- | --- |
-| Simplification tolerance (degrees) | `--tolerance` | 0.05 |
-| Coordinate decimals | `--decimals` | 3 |
-| Pre-simplification before partition | `--presimplify` | 0.01 |
-| Boundary densification for Voronoi (degrees) | `--voronoi-spacing` | 0.25 |
-| Sea mode | `--sea nearest\|distance` | nearest |
-| Sea distance (km), `distance` mode only | `--sea-distance-km` | 200 |
-| US states instead of USA | `--us-states` | off |
-| Sector boxes | `--sectors <file>` | the six boxes in `workflow/data/input/world_sectors.json` |
-| Override file | `--overrides <file>` | `workflow/data/input/code_overrides.json` |
-| Output name | `--out` | latest |
-| Interior samples per country | `--samples` | 40 |
-| Minimum border-band accuracy | `--min-border-accuracy` | measured on the first full build (see Validation) |
-| Random seed | `--seed` | 1 |
+| Setting                                      | Flag                      | Default                                                   |
+| -------------------------------------------- | ------------------------- | --------------------------------------------------------- |
+| Simplification tolerance (degrees)           | `--tolerance`             | 0.05                                                      |
+| Coordinate decimals                          | `--decimals`              | 3                                                         |
+| Pre-simplification before partition          | `--presimplify`           | 0.01                                                      |
+| Boundary densification for Voronoi (degrees) | `--voronoi-spacing`       | 0.25                                                      |
+| Sea mode                                     | `--sea nearest\|distance` | nearest                                                   |
+| Sea distance (km), `distance` mode only      | `--sea-distance-km`       | 200                                                       |
+| US states instead of USA                     | `--us-states`             | off                                                       |
+| Sector boxes                                 | `--sectors <file>`        | the six boxes in `workflow/data/input/world_sectors.json` |
+| Override file                                | `--overrides <file>`      | `workflow/data/input/code_overrides.json`                 |
+| Output name                                  | `--out`                   | latest                                                    |
+| Interior samples per country                 | `--samples`               | 40                                                        |
+| Minimum border-band accuracy                 | `--min-border-accuracy`   | measured on the first full build (see Validation)         |
+| Random seed                                  | `--seed`                  | 1                                                         |
 
 The same settings are keys in `workflow/qc2c.toml` and `QC2C_<UPPER_NAME>` environment variables.
 
@@ -112,7 +112,7 @@ The same settings are keys in `workflow/qc2c.toml` and `QC2C_<UPPER_NAME>` envir
 
 Point set: every vertex of every source polygon, plus `--samples` seeded random interior points per country so microstates are always covered.
 
-Each point is classified by its distance `d` to the nearest source geometry of a *different* code (source coverage after overrides):
+Each point is classified by its distance `d` to the nearest source geometry of a _different_ code (source coverage after overrides):
 
 1. "Ambiguous" when `d < 1e-9`: the point lies on a shared border and belongs to both codes. Not scored.
 2. "Core" when `d` exceeds `2 * (presimplify + tolerance + 10^-decimals + 0.001) + voronoi_spacing / 2`. The doubling and the spacing term cover sea that the Voronoi step can hand to a neighbour within one boundary spacing.
@@ -135,28 +135,28 @@ The fixture `points.json` holds up to 500 seeded core points with expected codes
 
 `compose.yaml` at the repo root:
 
-| Service | Image | Mounts | Command |
-| --- | --- | --- | --- |
-| `build` | workflow | `workflow/data/input:/data/input:ro`, `workflow/data/output:/data/output`, `workflow/qc2c.toml:/app/qc2c.toml:ro` | `build` |
-| `validate` | workflow | same as `build` | `validate` |
-| `publish` | workflow | output `:ro`, both package `data/` folders, `packages/fixtures` | `publish` |
-| `preview` | workflow (preview extra) | output | `preview` (PNG, headless) |
-| `test-pipeline` | workflow | `workflow:/app:ro` | `pytest` |
-| `test-python` | workflow | `packages/python:/pkg:ro`, `packages/fixtures:ro` | `pytest` |
-| `test-node` | `node:24` pinned by digest | `packages/typescript`, `packages/fixtures:ro` | `npm ci && npm run build && npm test` |
+| Service         | Image                      | Mounts                                                                                                            | Command                               |
+| --------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `build`         | workflow                   | `workflow/data/input:/data/input:ro`, `workflow/data/output:/data/output`, `workflow/qc2c.toml:/app/qc2c.toml:ro` | `build`                               |
+| `validate`      | workflow                   | same as `build`                                                                                                   | `validate`                            |
+| `publish`       | workflow                   | output `:ro`, both package `data/` folders, `packages/fixtures`                                                   | `publish`                             |
+| `preview`       | workflow (preview extra)   | output                                                                                                            | `preview` (PNG, headless)             |
+| `test-pipeline` | workflow                   | `workflow:/app:ro`                                                                                                | `pytest`                              |
+| `test-python`   | workflow                   | `packages/python:/pkg:ro`, `packages/fixtures:ro`                                                                 | `pytest`                              |
+| `test-node`     | `node:24` pinned by digest | `packages/typescript`, `packages/fixtures:ro`                                                                     | `npm ci && npm run build && npm test` |
 
 Services set `user: "${UID:-1000}:${GID:-1000}"` so Linux hosts get files they own. `workflow/data/output/` is gitignored except its README; the tracked copies of the data live in the packages.
 
 ## Tasks
 
-| Task | Runs |
-| --- | --- |
-| `task workflow:build -- <flags>` | `docker compose run --rm build build <flags>` |
-| `task workflow:validate -- <flags>` | `docker compose run --rm validate validate <flags>` |
-| `task workflow:publish` | `publish`, then `test-node` to rebuild `dist` |
-| `task workflow:preview` | `preview` |
-| `task workflow:check` | compare the latest build with the published package data |
-| `task workflow:test` | `test-pipeline`, `test-python` and `test-node` in parallel; fails if any fails |
+| Task                                | Runs                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------ |
+| `task workflow:build -- <flags>`    | `docker compose run --rm build build <flags>`                                  |
+| `task workflow:validate -- <flags>` | `docker compose run --rm validate validate <flags>`                            |
+| `task workflow:publish`             | `publish`, then `test-node` to rebuild `dist`                                  |
+| `task workflow:preview`             | `preview`                                                                      |
+| `task workflow:check`               | compare the latest build with the published package data                       |
+| `task workflow:test`                | `test-pipeline`, `test-python` and `test-node` in parallel; fails if any fails |
 
 ## Testing
 

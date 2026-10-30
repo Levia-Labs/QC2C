@@ -1,9 +1,11 @@
 # Task 6: Validation of output
 
 **Files:**
+
 - Create: `workflow/src/qc2c_build/validate.py`, `workflow/tests/test_validate.py`
 
 **Interfaces:**
+
 - Consumes: `load_features`, `read_sectors`, `sector_box`, `SNAP`, `run_build`, `BuildConfig`.
 - Produces: `validate.ValidationError(Exception)`, `validate.band(cfg) -> float`, `validate.PointSet(xy: np.ndarray, code: np.ndarray)`, `validate.source_points(features, samples, seed) -> PointSet`, `validate.classify(points, features, width) -> np.ndarray` (int8: 0 core, 1 border, 2 ambiguous), `validate.load_output(build_dir) -> tuple[dict, dict[str, dict]]`, `validate.lookup(manifest, sector_files, xy) -> np.ndarray`, `validate.fixture(points, kind, sectors, seed, size=500) -> list[dict]`, `validate.run_validation(cfg) -> dict`. Writes `validation.json` and `points.json` into `cfg.build_dir`.
 

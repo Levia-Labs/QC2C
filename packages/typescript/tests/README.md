@@ -6,7 +6,7 @@
 
 <!-- contents:start -->
 
-- [`fixture.test.js`](fixture.test.js) - Checks every pipeline fixture point against the built library.
-- [`index.test.js`](index.test.js) - JavaScript config.
+- [`fixture.test.cjs`](fixture.test.cjs) - Checks every pipeline fixture point against the built library.
+- [`index.test.cjs`](index.test.cjs) - Lookup API tests against the built library.
 
 <!-- contents:end -->

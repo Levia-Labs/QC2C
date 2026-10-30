@@ -1,11 +1,13 @@
 # Task 10: First full build, publish data, library fixtures, 2.0.0
 
 **Files:**
+
 - Modify: `workflow/qc2c.toml` (`min_border_accuracy`), `packages/python/tests/test_qc2c.py:36,39`, `packages/typescript/tests/index.test.js:47-50`, `packages/python/pyproject.toml:7`, `packages/typescript/package.json`, `packages/typescript/package-lock.json`
 - Create: `packages/python/tests/test_fixture.py`, `packages/typescript/tests/fixture.test.js`, `CHANGELOG.md`
 - Generated: `packages/python/qc2c/data/**`, `packages/typescript/src/data/**`, `packages/typescript/dist/**`, `packages/fixtures/points.json`
 
 **Interfaces:**
+
 - Consumes: all `workflow:*` tasks (Task 9).
 - Produces: shipped 2.0.0 data and fixture.
 
@@ -45,7 +47,9 @@ const { getSector, getCountry } = require("../dist/index");
 
 const dataDir = path.join(__dirname, "..", "src", "data", "json");
 const load = (name) => JSON.parse(fs.readFileSync(path.join(dataDir, name), "utf8"));
-const points = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "fixtures", "points.json"), "utf8"));
+const points = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "..", "..", "fixtures", "points.json"), "utf8"),
+);
 
 test("fixture points match the pipeline", () => {
   const manifest = load("world_sectors.json");

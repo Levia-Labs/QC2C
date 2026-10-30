@@ -28,21 +28,21 @@ Pass settings after `--`, for example `task workflow:build -- --tolerance 0.1 --
 
 Defaults live in [qc2c.toml](qc2c.toml). Environment variables `QC2C_<NAME>` override them, and flags override both.
 
-| Meaning | Flag | Default |
-| --- | --- | --- |
-| Border simplification in degrees | `--tolerance` | 0.05 |
-| Coordinate decimals in the output | `--decimals` | 3 |
-| Simplification before the sea partition | `--presimplify` | 0.01 |
-| Coastline sampling for the sea partition, degrees | `--voronoi-spacing` | 0.25 |
-| Sea mode: `nearest`, or `distance` to return no country far from land | `--sea` | nearest |
-| Distance limit for `--sea distance` | `--sea-distance-km` | 200 |
-| Return US state codes instead of `USA` | `--us-states` / `--no-us-states` | off |
-| Sector boxes, which must tile the world | `--sectors` | world_sectors.json |
-| Codes for areas without an ISO code | `--overrides` | code_overrides.json |
-| Output folder name | `--out` | latest |
-| Random interior test points per country | `--samples` | 40 |
-| Required accuracy near borders | `--min-border-accuracy` | see qc2c.toml |
-| Seed for test points | `--seed` | 1 |
+| Meaning                                                               | Flag                             | Default             |
+| --------------------------------------------------------------------- | -------------------------------- | ------------------- |
+| Border simplification in degrees                                      | `--tolerance`                    | 0.05                |
+| Coordinate decimals in the output                                     | `--decimals`                     | 3                   |
+| Simplification before the sea partition                               | `--presimplify`                  | 0.01                |
+| Coastline sampling for the sea partition, degrees                     | `--voronoi-spacing`              | 0.25                |
+| Sea mode: `nearest`, or `distance` to return no country far from land | `--sea`                          | nearest             |
+| Distance limit for `--sea distance`                                   | `--sea-distance-km`              | 200                 |
+| Return US state codes instead of `USA`                                | `--us-states` / `--no-us-states` | off                 |
+| Sector boxes, which must tile the world                               | `--sectors`                      | world_sectors.json  |
+| Codes for areas without an ISO code                                   | `--overrides`                    | code_overrides.json |
+| Output folder name                                                    | `--out`                          | latest              |
+| Random interior test points per country                               | `--samples`                      | 40                  |
+| Required accuracy near borders                                        | `--min-border-accuracy`          | see qc2c.toml       |
+| Seed for test points                                                  | `--seed`                         | 1                   |
 
 ## Validation
 

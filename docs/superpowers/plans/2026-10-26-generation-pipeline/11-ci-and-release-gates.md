@@ -1,10 +1,12 @@
 # Task 11: CI and release gates
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 - Modify: `.github/workflows/release.yml`
 
 **Interfaces:**
+
 - Consumes: `workflow:test`, `workflow:build`, `workflow:validate`, `workflow:check`.
 
 - [ ] **Step 1: Resolve pinned actions**
@@ -49,16 +51,16 @@ jobs:
 Add this job after `permissions:` / before `build-python:`:
 
 ```yaml
-  validate-data:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          submodules: true
-      - uses: go-task/setup-task@<SETUP_TASK_SHA> # <SETUP_TASK_TAG>
-      - run: task workflow:build
-      - run: task workflow:validate
-      - run: task workflow:check
+validate-data:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        submodules: true
+    - uses: go-task/setup-task@<SETUP_TASK_SHA> # <SETUP_TASK_TAG>
+    - run: task workflow:build
+    - run: task workflow:validate
+    - run: task workflow:check
 ```
 
 Change `publish-pypi` to `needs: [build-python, validate-data]` and `publish-npm` to `needs: [build-npm, validate-data]`. Add `.github/workflows` file purpose `"ci.yml" = "Pull request gate: Docker test suites, data build, validation and package data check."` to `docs/folder-purposes.toml`, then refresh READMEs with the folder README tool.

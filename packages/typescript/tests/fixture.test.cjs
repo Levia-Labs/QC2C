@@ -5,7 +5,9 @@ const { getSector, getCountry } = require("../dist/index");
 
 const dataDir = path.join(__dirname, "..", "dist", "data", "json");
 const load = (name) => JSON.parse(fs.readFileSync(path.join(dataDir, name), "utf8"));
-const points = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "fixtures", "points.json"), "utf8"));
+const points = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "..", "..", "fixtures", "points.json"), "utf8"),
+);
 
 test("fixture points match the pipeline", () => {
   const manifest = load("world_sectors.json");

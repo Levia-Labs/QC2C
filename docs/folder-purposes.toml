@@ -39,7 +39,8 @@
 "packages/fixtures" = "Points with expected codes, written by qc2c-build publish and used by both library test suites."
 
 [files]
-"fixture.test.js" = "Checks every pipeline fixture point against the built library."
+"fixture.test.cjs" = "Checks every pipeline fixture point against the built library."
+"index.test.cjs" = "Lookup API tests against the built library."
 "qc2c.json" = "Build metadata for the website: version, settings, sizes and validation summary."
 "preview.png" = "Rendered map of the shipped sectors."
 "ci.yml" = "Pull request and main gate: Docker test suites, data build, validation and package data check; cancels superseded runs."

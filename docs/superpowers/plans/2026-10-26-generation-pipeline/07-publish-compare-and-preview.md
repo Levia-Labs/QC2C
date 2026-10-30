@@ -1,9 +1,11 @@
 # Task 7: Publish, compare and preview
 
 **Files:**
+
 - Create: `workflow/src/qc2c_build/publish.py`, `workflow/src/qc2c_build/preview.py`, `workflow/tests/test_publish.py`
 
 **Interfaces:**
+
 - Consumes: `BuildConfig`, `run_build`, `run_validation`.
 - Produces: `publish.PublishError(Exception)`, `publish.TARGETS: tuple[str, ...]` (`"python/qc2c/data"`, `"typescript/src/data"`), `publish.publish(cfg) -> list[Path]`, `publish.compare(cfg) -> list[str]`; `preview.render(cfg) -> Path`.
 
