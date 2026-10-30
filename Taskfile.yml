@@ -13,6 +13,10 @@ includes:
   ci: .crepidoma/taskfiles/ci
   rtk: .crepidoma/taskfiles/rtk
   setup: .crepidoma/taskfiles/setup
+  edit: .crepidoma/taskfiles/edit
+  sdd: .crepidoma/taskfiles/sdd
+  review: .crepidoma/taskfiles/review
+  code: .crepidoma/taskfiles/code
   workflow: ./tasks/workflow.yml
   local: ./tasks/local.yml
   pr: ./tasks/pr.yml
