@@ -1,4 +1,5 @@
 """Check a build against the source borders; write validation.json and the library fixture."""
+
 from __future__ import annotations
 
 import gzip
@@ -31,7 +32,7 @@ class PointSet:
 
 
 def band(cfg: BuildConfig) -> float:
-    step = cfg.presimplify + cfg.tolerance + 10.0 ** -cfg.decimals + SNAP
+    step = cfg.presimplify + cfg.tolerance + 10.0**-cfg.decimals + SNAP
     return 2 * step + cfg.voronoi_spacing / 2
 
 
@@ -106,10 +107,18 @@ def _check_sector(key: str, sector: dict) -> None:
             raise ValidationError(f"{key}: {code} is not a list of rings")
         for ring in rings:
             if not isinstance(ring, list) or len(ring) < 3:
-                raise ValidationError(f"{key}: {code} has a ring that is not a list of at least 3 points")
+                raise ValidationError(
+                    f"{key}: {code} has a ring that is not a list of at least 3 points"
+                )
             for pair in ring:
-                if not isinstance(pair, list) or len(pair) != 2 or not all(_number(v) for v in pair):
-                    raise ValidationError(f"{key}: {code} has a point that is not a [lat, lng] number pair")
+                if (
+                    not isinstance(pair, list)
+                    or len(pair) != 2
+                    or not all(_number(v) for v in pair)
+                ):
+                    raise ValidationError(
+                        f"{key}: {code} has a point that is not a [lat, lng] number pair"
+                    )
 
 
 def load_output(build_dir: Path) -> tuple[dict, dict[str, dict]]:
@@ -132,8 +141,14 @@ def lookup(manifest: dict, sector_files: dict[str, dict], xy: np.ndarray) -> np.
                 owners.append(code)
                 ranks.append(sector_index * 1_000_000 + order)
                 boxes.append(entry["bounds"])
-    owners_arr, ranks_arr, boxes_arr = np.array(owners, dtype=object), np.array(ranks), np.array(boxes, dtype=float)
-    point_index, poly_index = shapely.STRtree(polygons).query(shapely.points(xy), predicate="intersects")
+    owners_arr, ranks_arr, boxes_arr = (
+        np.array(owners, dtype=object),
+        np.array(ranks),
+        np.array(boxes, dtype=float),
+    )
+    point_index, poly_index = shapely.STRtree(polygons).query(
+        shapely.points(xy), predicate="intersects"
+    )
     lat, lng = xy[point_index, 1], xy[point_index, 0]
     b = boxes_arr[poly_index]
     inside = (b[:, 0] <= lat) & (lat <= b[:, 2]) & (b[:, 1] <= lng) & (lng <= b[:, 3])
@@ -150,14 +165,21 @@ def _by_code(index: np.ndarray, codes: np.ndarray) -> dict[str, np.ndarray]:
     names, inverse = np.unique(codes[index], return_inverse=True)
     order = np.argsort(inverse, kind="stable")
     groups = np.split(index[order], np.cumsum(np.bincount(inverse))[:-1])
-    return dict(zip(names.tolist(), groups))
+    return dict(zip(names.tolist(), groups, strict=False))
 
 
-def fixture(points: PointSet, kind: np.ndarray, sectors: Sectors, seed: int, size: int = 500,
-            got: np.ndarray | None = None) -> list[dict]:
+def fixture(
+    points: PointSet,
+    kind: np.ndarray,
+    sectors: Sectors,
+    seed: int,
+    size: int = 500,
+    got: np.ndarray | None = None,
+) -> list[dict]:
     """Seeded core points, one per code first, none on a sector edge (TypeScript checks one sector).
 
-    A code without a core point falls back to one border point the build resolves to that code (needs got).
+    A code without a core point falls back to one border point the build
+    resolves to that code (needs got).
     """
     lat, lng = points.xy[:, 1], points.xy[:, 0]
     edges = np.array(list(sectors.values()), dtype=float)
@@ -170,13 +192,22 @@ def fixture(points: PointSet, kind: np.ndarray, sectors: Sectors, seed: int, siz
     chosen = [int(rng.choice(group)) for _, group in sorted(by_core.items())]
     if got is not None:
         fallback = np.flatnonzero((kind == BORDER) & free & (got == points.code))
-        chosen += [int(rng.choice(group)) for code, group in sorted(_by_code(fallback, points.code).items())
-                   if code not in by_core]
+        chosen += [
+            int(rng.choice(group))
+            for code, group in sorted(_by_code(fallback, points.code).items())
+            if code not in by_core
+        ]
     rest = np.setdiff1d(pool, chosen)
     extra = rng.choice(rest, size=min(max(size - len(chosen), 0), len(rest)), replace=False)
     picked = sorted(set(chosen) | {int(i) for i in extra})
-    return [{"lat": round(float(lat[i]), 6), "lng": round(float(lng[i]), 6), "code": str(points.code[i])}
-            for i in picked]
+    return [
+        {
+            "lat": round(float(lat[i]), 6),
+            "lng": round(float(lng[i]), 6),
+            "code": str(points.code[i]),
+        }
+        for i in picked
+    ]
 
 
 def _accuracy(correct: np.ndarray, mask: np.ndarray) -> float:
@@ -196,7 +227,11 @@ def run_validation(cfg: BuildConfig) -> dict:
         failures.append(str(error))
     if manifest and [entry["bounds"] for entry in manifest.values()] != list(sectors.values()):
         failures.append("manifest bounds differ from the sector file")
-    got = lookup(manifest, sector_files, points.xy) if sector_files else np.full(len(kind), None, dtype=object)
+    got = (
+        lookup(manifest, sector_files, points.xy)
+        if sector_files
+        else np.full(len(kind), None, dtype=object)
+    )
     correct = got == points.code
     core, border, scored = kind == CORE, kind == BORDER, kind != AMBIGUOUS
     if not correct[core].all():
@@ -213,24 +248,38 @@ def run_validation(cfg: BuildConfig) -> dict:
     names, inverse = np.unique(points.code, return_inverse=True)
     totals = np.bincount(inverse, weights=scored, minlength=len(names))
     hits = np.bincount(inverse, weights=scored & correct, minlength=len(names))
-    per_code = {str(name): {"points": int(total), "accuracy": round(float(hit / total) if total else 1.0, 6)}
-                for name, total, hit in zip(names, totals, hits)}
+    per_code = {
+        str(name): {
+            "points": int(total),
+            "accuracy": round(float(hit / total) if total else 1.0, 6),
+        }
+        for name, total, hit in zip(names, totals, hits, strict=False)
+    }
     chosen = fixture(points, kind, sectors, cfg.seed, got=got)
     report = {
         "passed": not failures,
         "failures": failures,
         "band": band(cfg),
-        "counts": {"total": len(kind), "core": int(core.sum()), "border": int(border.sum()),
-                   "ambiguous": int((kind == AMBIGUOUS).sum())},
-        "accuracy": {"overall": _accuracy(correct, scored), "core": _accuracy(correct, core),
-                     "border": border_accuracy},
+        "counts": {
+            "total": len(kind),
+            "core": int(core.sum()),
+            "border": int(border.sum()),
+            "ambiguous": int((kind == AMBIGUOUS).sum()),
+        },
+        "accuracy": {
+            "overall": _accuracy(correct, scored),
+            "core": _accuracy(correct, core),
+            "border": border_accuracy,
+        },
         "worst": sorted(per_code, key=lambda c: (per_code[c]["accuracy"], c))[:10],
         "fixture_size": len(chosen),
         "fixture_missing": sorted(source_codes - {entry["code"] for entry in chosen}),
         "per_code": per_code,
     }
     cfg.build_dir.mkdir(parents=True, exist_ok=True)
-    (cfg.build_dir / "validation.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    (cfg.build_dir / "validation.json").write_text(
+        json.dumps(report, indent=2) + "\n", encoding="utf-8"
+    )
     points_json = json.dumps(chosen, separators=(",", ":")) + "\n"
     (cfg.build_dir / "points.json").write_text(points_json, encoding="utf-8")
     return report

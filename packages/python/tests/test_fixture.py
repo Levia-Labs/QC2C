@@ -1,4 +1,5 @@
 """Every fixture point written by qc2c-build must resolve to its expected code."""
+
 import json
 from pathlib import Path
 

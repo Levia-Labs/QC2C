@@ -1,0 +1,10 @@
+{
+  "name": "qc2c-root",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@eslint/js": "9.39.2",
+    "eslint": "9.39.2",
+    "typescript-eslint": "8.72.1"
+  }
+}

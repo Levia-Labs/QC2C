@@ -1,4 +1,5 @@
 """Run the build stages in order and record what was built."""
+
 from __future__ import annotations
 
 import hashlib
@@ -41,13 +42,21 @@ def run_build(cfg: BuildConfig) -> dict:
     mark("simplify")
     files, manifest = split_into_sectors(simplified, features, sectors, cfg.decimals)
     mark("sectors")
-    inputs = ["countries.json", cfg.overrides, cfg.sectors] + (["us_states.json"] if cfg.us_states else [])
+    inputs = ["countries.json", cfg.overrides, cfg.sectors] + (
+        ["us_states.json"] if cfg.us_states else []
+    )
     meta = {
         "settings": cfg.as_dict(),
         "inputs": {name: _sha256(cfg.input_file(name)) for name in inputs},
-        "versions": {"shapely": shapely.__version__, "geos": shapely.geos_version_string, "numpy": numpy.__version__},
+        "versions": {
+            "shapely": shapely.__version__,
+            "geos": shapely.geos_version_string,
+            "numpy": numpy.__version__,
+        },
         "codes": len({code for sector in files.values() for code in sector}),
-        "points": sum(len(ring) for sector in files.values() for rings in sector.values() for ring in rings),
+        "points": sum(
+            len(ring) for sector in files.values() for rings in sector.values() for ring in rings
+        ),
         "seconds": timings,
     }
     return write_build(cfg, files, manifest, meta)

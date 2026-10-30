@@ -1,4 +1,5 @@
 """Simplify shared borders once, snap to the output grid and keep every code alive."""
+
 from __future__ import annotations
 
 import math
@@ -12,15 +13,22 @@ from .geom import EMPTY, make_coverage, polygonal
 from .load import Feature
 
 
-def simplify_partition(parts: list[Feature], land: list[Feature], cfg: BuildConfig) -> list[Feature]:
-    """Simplify the partition `parts`; `land` is the source land per code, used to restore lost land."""
+def simplify_partition(
+    parts: list[Feature], land: list[Feature], cfg: BuildConfig
+) -> list[Feature]:
+    """Simplify the partition `parts`.
+
+    `land` is the source land per code, used to restore lost land.
+    """
     geoms = [geom for _, geom in parts]
     if cfg.tolerance > 0:
         geoms = list(shapely.coverage_simplify(geoms, cfg.tolerance))
-    grid = 10.0 ** -cfg.decimals
+    grid = 10.0**-cfg.decimals
     # The same grid for every geometry keeps shared vertices identical.
     snapped = [polygonal(shapely.set_precision(geom, grid)) for geom in geoms]
-    return restore_lost(land, [(code, geom) for (code, _), geom in zip(parts, snapped)], grid)
+    return restore_lost(
+        land, [(code, geom) for (code, _), geom in zip(parts, snapped, strict=False)], grid
+    )
 
 
 def overlap_area(a: BaseGeometry, b: BaseGeometry) -> float:
@@ -31,7 +39,10 @@ def overlap_area(a: BaseGeometry, b: BaseGeometry) -> float:
 
 
 def exact(geom: BaseGeometry) -> BaseGeometry:
-    """`geom` without the fixed precision model, so overlay results are not rounded onto the grid."""
+    """`geom` without the fixed precision model.
+
+    Overlay results are then not rounded onto the grid.
+    """
     return shapely.set_precision(geom, 0)
 
 
@@ -48,14 +59,16 @@ def snapped_land(geom: BaseGeometry, grid: float, keep: float) -> BaseGeometry:
         return patch  # not a microstate; the snapped land is what there is
     cells = shapely.box(*np.meshgrid(xs, ys), *np.meshgrid(xs + grid, ys + grid))
     areas = shapely.area(shapely.intersection(cells, geom)).ravel()
-    # Cells that merely touch the land (or share float noise with it) would add area it does not have.
+    # Cells that merely touch the land (or share float noise with it)
+    # would add area it does not have.
     touching = areas > 1e-9 * grid * grid
     touching[areas.argmax()] = True  # float noise can zero every area of a degenerate land
     return polygonal(shapely.set_precision(shapely.union_all(cells.ravel()[touching]), grid))
 
 
-def restore_lost(land: list[Feature], simplified: list[Feature], grid: float,
-                 keep: float = 0.9) -> list[Feature]:
+def restore_lost(
+    land: list[Feature], simplified: list[Feature], grid: float, keep: float = 0.9
+) -> list[Feature]:
     """Put back the land of codes that simplification shrank below `keep` of their source land.
 
     The criterion is land, not partition area: a microstate such as the Vatican
@@ -78,14 +91,18 @@ def restore_lost(land: list[Feature], simplified: list[Feature], grid: float,
         for other, (other_code, other_geom) in enumerate(result):
             if other_code == code or not other_geom.intersects(patch):
                 continue
-            # A code restored earlier keeps its own land, which is off the grid; only the rest is cut from it.
+            # A code restored earlier keeps its own land, which is off the grid;
+            # only the rest is cut from it.
             if other_code in restored:
                 cut = exact(patch).difference(restored[other_code])
                 result[other] = (other_code, polygonal(exact(other_geom).difference(cut)))
             else:
-                result[other] = (other_code, polygonal(shapely.set_precision(other_geom.difference(patch), grid)))
+                result[other] = (
+                    other_code,
+                    polygonal(shapely.set_precision(other_geom.difference(patch), grid)),
+                )
         merged = polygonal(shapely.union(current, patch))
-        for other_code, other_land in restored.items():
+        for other_land in restored.values():
             merged = polygonal(exact(merged).difference(other_land))
         if index is None:
             index_of[code] = len(result)

@@ -27,7 +27,9 @@ def test_publish_then_compare(world):
     assert (world.packages_dir / "typescript/src/data/json/world_sector_1.json").is_file()
     assert (world.packages_dir / "fixtures/points.json").is_file()
     assert compare(world) == []
-    (world.packages_dir / "python/qc2c/data/json/world_sector_1.json").write_text("{}", encoding="utf-8")
+    (world.packages_dir / "python/qc2c/data/json/world_sector_1.json").write_text(
+        "{}", encoding="utf-8"
+    )
     assert compare(world) == ["python/qc2c/data/json/world_sector_1.json"]
 
 
@@ -43,7 +45,9 @@ def test_publish_keeps_other_files(world):
 
 def test_publish_refuses_failed_validation(world):
     run_build(world)
-    (world.build_dir / "validation.json").write_text(json.dumps({"passed": False}), encoding="utf-8")
+    (world.build_dir / "validation.json").write_text(
+        json.dumps({"passed": False}), encoding="utf-8"
+    )
     with pytest.raises(PublishError, match="validation failed"):
         publish(world)
 
@@ -65,6 +69,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'qc2c_build.publish'`
 
 ```python
 """Copy a validated build into both packages, or report how they differ from it."""
+
 from __future__ import annotations
 
 import json
@@ -115,8 +120,12 @@ def publish(cfg: BuildConfig) -> list[Path]:
 def compare(cfg: BuildConfig) -> list[str]:
     """Package paths whose bytes differ from the build, plus shipped sector files the build lacks."""
     planned = _planned(cfg)
-    diffs = [rel for src, rel in planned
-             if not (cfg.packages_dir / rel).is_file() or (cfg.packages_dir / rel).read_bytes() != src.read_bytes()]
+    diffs = [
+        rel
+        for src, rel in planned
+        if not (cfg.packages_dir / rel).is_file()
+        or (cfg.packages_dir / rel).read_bytes() != src.read_bytes()
+    ]
     expected = {rel for _, rel in planned}
     for target in TARGETS:
         for folder in ("json", "gz"):
@@ -131,6 +140,7 @@ def compare(cfg: BuildConfig) -> list[str]:
 
 ```python
 """Draw a build as a PNG with sector boxes, without a display."""
+
 from __future__ import annotations
 
 import gzip
@@ -160,11 +170,26 @@ def render(cfg: BuildConfig) -> Path:
         sector = json.loads(gzip.decompress((build / key).read_bytes()))
         for code, rings in sector.items():
             for ring in rings:
-                axes.add_patch(Polygon([(lng, lat) for lat, lng in ring], closed=True,
-                                       facecolor=_color(code), edgecolor="black", linewidth=0.1))
+                axes.add_patch(
+                    Polygon(
+                        [(lng, lat) for lat, lng in ring],
+                        closed=True,
+                        facecolor=_color(code),
+                        edgecolor="black",
+                        linewidth=0.1,
+                    )
+                )
         lat_min, lng_min, lat_max, lng_max = entry["bounds"]
-        axes.add_patch(Rectangle((lng_min, lat_min), lng_max - lng_min, lat_max - lat_min,
-                                 fill=False, edgecolor="red", linewidth=0.8))
+        axes.add_patch(
+            Rectangle(
+                (lng_min, lat_min),
+                lng_max - lng_min,
+                lat_max - lat_min,
+                fill=False,
+                edgecolor="red",
+                linewidth=0.8,
+            )
+        )
     axes.set_xlim(-180, 180)
     axes.set_ylim(-90, 90)
     axes.set_aspect("equal")

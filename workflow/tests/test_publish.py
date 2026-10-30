@@ -23,7 +23,9 @@ def test_publish_then_compare(world):
     assert (world.packages_dir / "typescript/src/data/json/world_sector_1.json").is_file()
     assert (world.packages_dir / "fixtures/points.json").is_file()
     assert compare(world) == []
-    (world.packages_dir / "python/qc2c/data/json/world_sector_1.json").write_text("{}", encoding="utf-8")
+    (world.packages_dir / "python/qc2c/data/json/world_sector_1.json").write_text(
+        "{}", encoding="utf-8"
+    )
     assert compare(world) == ["python/qc2c/data/json/world_sector_1.json"]
 
 
@@ -42,7 +44,9 @@ def test_publish_keeps_other_files(world):
 
 def test_publish_refuses_failed_validation(world):
     run_build(world)
-    (world.build_dir / "validation.json").write_text(json.dumps({"passed": False}), encoding="utf-8")
+    (world.build_dir / "validation.json").write_text(
+        json.dumps({"passed": False}), encoding="utf-8"
+    )
     with pytest.raises(PublishError, match="validation failed"):
         publish(world)
 
@@ -67,7 +71,7 @@ def test_publish_missing_source_leaves_packages_intact(world):
     target = world.packages_dir / "python/qc2c/data/json/world_sector_1.json"
     before = target.read_bytes()
     (world.build_dir / "points.json").unlink()
-    with pytest.raises(PublishError, match="points.json"):
+    with pytest.raises(PublishError, match=r"points\.json"):
         publish(world)
     assert target.read_bytes() == before
 
@@ -96,8 +100,14 @@ def test_web_bundle_contents(world):
     web = world.web_dir
     names = {p.name for p in web.iterdir()}
     sectors = sorted(p.name for p in build.glob("world_sector_*.json"))
-    assert names == {"world_sectors.json", "world_sectors.json.gz", "qc2c.json", "preview.png",
-                     *sectors, *(f"{n}.gz" for n in sectors)}
+    assert names == {
+        "world_sectors.json",
+        "world_sectors.json.gz",
+        "qc2c.json",
+        "preview.png",
+        *sectors,
+        *(f"{n}.gz" for n in sectors),
+    }
     assert (web / "preview.png").read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
     for name in (*sectors, *(f"{n}.gz" for n in sectors), "world_sectors.json.gz"):
         assert (web / name).read_bytes() == (build / name).read_bytes()
@@ -117,14 +127,27 @@ def test_web_metadata(world):
     validation = json.loads((world.build_dir / "validation.json").read_text(encoding="utf-8"))
     assert raw == json.dumps(meta, indent=2, sort_keys=True) + "\n"
     assert meta["name"] == "qc2c" and meta["version"] == "0.0.0-test"
-    assert (meta["codes"], meta["points"], meta["gzip_total"]) == (build["codes"], build["points"], build["gzip_total"])
+    assert (meta["codes"], meta["points"], meta["gzip_total"]) == (
+        build["codes"],
+        build["points"],
+        build["gzip_total"],
+    )
     assert meta["inputs"] == build["inputs"]
     assert meta["validation"]["passed"] is True
     assert meta["validation"]["overall"] == validation["accuracy"]["overall"]
     assert meta["validation"]["counts"] == validation["counts"]
-    assert set(meta["settings"]) == {"tolerance", "decimals", "presimplify", "voronoi_spacing", "sea",
-                                     "sea_distance_km", "us_states"}
-    assert meta["files"]["world_sectors.json"] == (world.web_dir / "world_sectors.json").stat().st_size
+    assert set(meta["settings"]) == {
+        "tolerance",
+        "decimals",
+        "presimplify",
+        "voronoi_spacing",
+        "sea",
+        "sea_distance_km",
+        "us_states",
+    }
+    assert (
+        meta["files"]["world_sectors.json"] == (world.web_dir / "world_sectors.json").stat().st_size
+    )
     assert set(meta["files"]) == {p.name for p in world.web_dir.iterdir()} - {"qc2c.json"}
     assert "seconds" not in raw
 
@@ -150,7 +173,7 @@ def test_publish_needs_package_version(world):
     run_build(world)
     run_validation(world)
     (world.packages_dir / "typescript/package.json").unlink()
-    with pytest.raises(PublishError, match="package.json"):
+    with pytest.raises(PublishError, match=r"package\.json"):
         publish(world)
 
 
@@ -176,7 +199,11 @@ def test_publish_failure_midway_keeps_previous_files(world, monkeypatch, fail_on
     with pytest.raises(OSError, match="disk full"):
         publish(world)
     assert len(calls) == fail_on
-    after = {p: p.read_bytes() for p in [*world.packages_dir.rglob("*"), *world.web_dir.rglob("*")] if p.is_file()}
+    after = {
+        p: p.read_bytes()
+        for p in [*world.packages_dir.rglob("*"), *world.web_dir.rglob("*")]
+        if p.is_file()
+    }
     assert after == before
     assert not [p for p in after if p.name.endswith(".tmp")]
 

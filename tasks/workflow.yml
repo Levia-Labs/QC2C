@@ -4,9 +4,11 @@ version: "3"
 # there (files still land owned by the Windows user); elsewhere it runs as the caller.
 env:
   QC2C_UID:
-    sh: 'case "${OS:-}$(uname -s 2>/dev/null)" in Windows_NT*|*MINGW*|*MSYS*|*CYGWIN*) echo 0;; *) id -u 2>/dev/null || echo 1000;; esac'
+    sh: 'case "${OS:-}$(uname -s 2>/dev/null)" in Windows_NT*|*MINGW*|*MSYS*|*CYGWIN*) echo 0;;
+      *) id -u 2>/dev/null || echo 1000;; esac'
   QC2C_GID:
-    sh: 'case "${OS:-}$(uname -s 2>/dev/null)" in Windows_NT*|*MINGW*|*MSYS*|*CYGWIN*) echo 0;; *) id -g 2>/dev/null || echo 1000;; esac'
+    sh: 'case "${OS:-}$(uname -s 2>/dev/null)" in Windows_NT*|*MINGW*|*MSYS*|*CYGWIN*) echo 0;;
+      *) id -g 2>/dev/null || echo 1000;; esac'
 
 tasks:
   image:
@@ -16,7 +18,8 @@ tasks:
       - docker compose build build
 
   build:
-    desc: "Build sector data into workflow/data/output/<out> in Docker. Usage: task workflow:build -- [--tolerance 0.1] [--out name]"
+    desc: "Build sector data into workflow/data/output/<out> in Docker.
+      Usage: task workflow:build -- [--tolerance 0.1] [--out name]"
     deps: [image]
     cmds:
       - docker compose run --rm build build {{.CLI_ARGS}}

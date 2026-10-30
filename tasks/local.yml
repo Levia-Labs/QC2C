@@ -4,7 +4,8 @@ version: "3"
 # tasks stay the reference gate; these print only the verdict (or the failing excerpt) so an
 # agent loop never pipes pytest or jest through tail.
 vars:
-  LOCAL_GATE: 'uv run --no-project --python ">=3.12" "{{.ROOT_DIR}}/.crepidoma/plugins/crepidoma/scripts/gate_runner.py" quiet --'
+  LOCAL_GATE: 'uv run --no-project --python ">=3.12"
+    "{{.ROOT_DIR}}/.crepidoma/plugins/crepidoma/scripts/gate_runner.py" quiet --'
 
 # gate_runner prints captured output through the console code page, which crashes on non-ASCII
 # failure output (pytest or hypothesis reprs) under a Windows console.
@@ -16,13 +17,15 @@ tasks:
     desc: "Pipeline unit tests on the host. Usage: task local:pipeline -- [pytest args, paths under workflow/]"
     silent: true
     cmds:
-      - '{{.LOCAL_GATE}} uv run --project workflow --all-extras pytest --rootdir workflow {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}workflow/tests{{end}}'
+      - '{{.LOCAL_GATE}} uv run --project workflow --all-extras pytest --rootdir workflow
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}workflow/tests{{end}}'
 
   python:
     desc: "Python package tests on the host. Usage: task local:python -- [pytest args, paths under packages/python/]"
     silent: true
     cmds:
-      - '{{.LOCAL_GATE}} uv run --project packages/python --with pytest pytest -q --rootdir packages/python {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}packages/python/tests{{end}}'
+      - '{{.LOCAL_GATE}} uv run --project packages/python --with pytest pytest -q --rootdir packages/python
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}packages/python/tests{{end}}'
 
   # No host Node task: jest on the Windows host reports jest-circus runner.js "not found" although
   # the file exists, so the TypeScript suite stays on workflow:test-node in Docker.

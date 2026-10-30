@@ -53,7 +53,10 @@ def test_distance_mode_leaves_open_sea_empty(world):
 
 
 def test_antimeridian_halves_survive(world):
-    write_inputs(world.input_dir, [feature("RUS", "Russia", [square(175, 60, 180, 65)], [square(-180, 60, -175, 65)])])
+    write_inputs(
+        world.input_dir,
+        [feature("RUS", "Russia", [square(175, 60, 180, 65)], [square(-180, 60, -175, 65)])],
+    )
     parts = build_partition(load_features(world), world)
     assert code_at(parts, 178, 62) == "RUS"
     assert code_at(parts, -178, 62) == "RUS"
@@ -68,6 +71,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'qc2c_build.partition'
 
 ```python
 """Give sea to the nearest country, so the output covers the whole plane."""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -102,7 +106,9 @@ def nearest_owner_cells(land: list[BaseGeometry], spacing: float) -> dict[int, l
         owners.append(np.full(len(points), index))
     xy, first = np.unique(np.round(np.vstack(coords), 4), axis=0, return_index=True)
     owner = np.concatenate(owners)[first]
-    cells = shapely.get_parts(shapely.voronoi_polygons(MultiPoint(xy), extend_to=WORLD, tolerance=SNAP))
+    cells = shapely.get_parts(
+        shapely.voronoi_polygons(MultiPoint(xy), extend_to=WORLD, tolerance=SNAP)
+    )
     # A point inside a cell is nearest to that cell's generator, which survives snapping.
     nearest = shapely.STRtree(shapely.points(xy)).query_nearest(shapely.point_on_surface(cells))
     grouped: dict[int, list[BaseGeometry]] = defaultdict(list)

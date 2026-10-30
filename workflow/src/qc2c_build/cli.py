@@ -1,4 +1,5 @@
 """qc2c-build: build, validate, publish, compare or preview QC2C sector data."""
+
 from __future__ import annotations
 
 import argparse
@@ -16,16 +17,20 @@ from .validate import run_validation
 def _build(cfg: BuildConfig) -> int:
     meta = run_build(cfg)
     seconds = sum(meta["seconds"].values())
-    print(f"built {cfg.build_dir}: {meta['codes']} codes, {meta['points']} points, "
-          f"{meta['gzip_total'] / 1024:.0f} KB gzip in {seconds:.0f}s")
+    print(
+        f"built {cfg.build_dir}: {meta['codes']} codes, {meta['points']} points, "
+        f"{meta['gzip_total'] / 1024:.0f} KB gzip in {seconds:.0f}s"
+    )
     return 0
 
 
 def _validate(cfg: BuildConfig) -> int:
     report = run_validation(cfg)
     accuracy = report["accuracy"]
-    print(f"validated {cfg.build_dir}: core {accuracy['core']:.4%}, border {accuracy['border']:.4%}, "
-          f"overall {accuracy['overall']:.4%}; worst {', '.join(report['worst'][:5])}")
+    print(
+        f"validated {cfg.build_dir}: core {accuracy['core']:.4%}, border {accuracy['border']:.4%}, "
+        f"overall {accuracy['overall']:.4%}; worst {', '.join(report['worst'][:5])}"
+    )
     missing = ", ".join(report["fixture_missing"]) or "none"
     print(f"fixture {report['fixture_size']} points; fixture missing: {missing}")
     for failure in report["failures"]:
@@ -59,7 +64,13 @@ def _preview(cfg: BuildConfig) -> int:
     return 0
 
 
-COMMANDS = {"build": _build, "validate": _validate, "publish": _publish, "compare": _compare, "preview": _preview}
+COMMANDS = {
+    "build": _build,
+    "validate": _validate,
+    "publish": _publish,
+    "compare": _compare,
+    "preview": _preview,
+}
 
 
 class _Parser(argparse.ArgumentParser):
@@ -71,11 +82,15 @@ class _Parser(argparse.ArgumentParser):
 def parser() -> argparse.ArgumentParser:
     result = _Parser(prog="qc2c-build", description=__doc__)
     result.add_argument("command", choices=sorted(COMMANDS))
-    result.add_argument("--config", type=Path, default=Path(os.environ.get("QC2C_CONFIG", "qc2c.toml")))
+    result.add_argument(
+        "--config", type=Path, default=Path(os.environ.get("QC2C_CONFIG", "qc2c.toml"))
+    )
     for field in fields(BuildConfig):
         flag = "--" + field.name.replace("_", "-")
         if isinstance(getattr(DEFAULTS, field.name), bool):
-            result.add_argument(flag, dest=field.name, action=argparse.BooleanOptionalAction, default=None)
+            result.add_argument(
+                flag, dest=field.name, action=argparse.BooleanOptionalAction, default=None
+            )
         else:
             result.add_argument(flag, dest=field.name, default=None, metavar=field.name.upper())
     return result

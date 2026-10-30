@@ -1,5 +1,4 @@
 import pytest
-
 from qc2c import coordinates_to_country, get_country, get_sector, point_in_polygon
 
 SQUARE = [[0, 0], [0, 2], [2, 2], [2, 0]]

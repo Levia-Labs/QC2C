@@ -1,4 +1,5 @@
 """Polygon helpers shared by the build stages."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -10,7 +11,9 @@ from shapely.ops import split
 from .config import ConfigError
 
 EMPTY = MultiPolygon()
-EDGE_TOLERANCE = 1e-6  # how far past the world edge a source vertex may drift and still be pulled back
+EDGE_TOLERANCE = (
+    1e-6  # how far past the world edge a source vertex may drift and still be pulled back
+)
 
 
 def _polygons(geom: BaseGeometry) -> list[Polygon]:
@@ -47,7 +50,9 @@ def clamp_to_world(geom: BaseGeometry) -> BaseGeometry:
         bad = (xy < low - EDGE_TOLERANCE) | (xy > high + EDGE_TOLERANCE)
         if bad.any():
             x, y = xy[np.argmax(bad.any(axis=1))]
-            raise ConfigError(f"coordinate ({x}, {y}) lies outside the world [-180, 180] x [-90, 90]")
+            raise ConfigError(
+                f"coordinate ({x}, {y}) lies outside the world [-180, 180] x [-90, 90]"
+            )
         return np.clip(xy, low, high)
 
     return polygonal(shapely.transform(geom, clamp))
@@ -90,7 +95,7 @@ def make_coverage(features: list[tuple[str, BaseGeometry]]) -> list[tuple[str, B
     points = shapely.point_on_surface(faces)
     # query order is arbitrary, so pick the lowest owner per face
     best: dict[int, int] = {}
-    for point_index, geom_index in zip(*tree.query(points, predicate="within")):
+    for point_index, geom_index in zip(*tree.query(points, predicate="within"), strict=False):
         best[int(point_index)] = min(best.get(int(point_index), int(geom_index)), int(geom_index))
     owned: dict[int, list[BaseGeometry]] = {}
     for point_index, geom_index in best.items():

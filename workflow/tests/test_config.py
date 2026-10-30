@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-
 from qc2c_build.config import DEFAULTS, BuildConfig, ConfigError, load_config
 
 
@@ -19,7 +18,9 @@ def test_precedence(tmp_path: Path):
     toml.write_text("tolerance = 0.1\n", encoding="utf-8")
     assert load_config(toml, env={}).tolerance == 0.1
     assert load_config(toml, env={"QC2C_TOLERANCE": "0.2"}).tolerance == 0.2
-    assert load_config(toml, env={"QC2C_TOLERANCE": "0.2"}, cli={"tolerance": "0.3"}).tolerance == 0.3
+    assert (
+        load_config(toml, env={"QC2C_TOLERANCE": "0.2"}, cli={"tolerance": "0.3"}).tolerance == 0.3
+    )
 
 
 def test_cli_none_keeps_lower_layers():
@@ -42,12 +43,21 @@ def test_unknown_toml_key(tmp_path: Path):
 def test_malformed_toml_is_config_error(tmp_path: Path):
     toml = tmp_path / "qc2c.toml"
     toml.write_text("sea = [", encoding="utf-8")
-    with pytest.raises(ConfigError, match="qc2c.toml"):
+    with pytest.raises(ConfigError, match=r"qc2c\.toml"):
         load_config(toml, env={})
 
 
-@pytest.mark.parametrize("bad", [{"sea": "ocean"}, {"out": "../x"}, {"decimals": 9}, {"tolerance": -1},
-                                 {"samples": 0}, {"min_border_accuracy": 1.5}])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"sea": "ocean"},
+        {"out": "../x"},
+        {"decimals": 9},
+        {"tolerance": -1},
+        {"samples": 0},
+        {"min_border_accuracy": 1.5},
+    ],
+)
 def test_invalid_values(bad):
     with pytest.raises(ConfigError):
         BuildConfig(**bad)
@@ -66,7 +76,13 @@ def test_tolerance_roundtrips_from_text(value):
     assert load_config(None, env={}, cli={"tolerance": repr(value)}).tolerance == value
 
 
-FLOAT_FIELDS = ["tolerance", "presimplify", "voronoi_spacing", "sea_distance_km", "min_border_accuracy"]
+FLOAT_FIELDS = [
+    "tolerance",
+    "presimplify",
+    "voronoi_spacing",
+    "sea_distance_km",
+    "min_border_accuracy",
+]
 
 
 @pytest.mark.parametrize("field", FLOAT_FIELDS)

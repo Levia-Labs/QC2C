@@ -1,4 +1,5 @@
 """Give sea to the nearest country, so the output covers the whole plane."""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -21,7 +22,7 @@ def presimplified(features: list[Feature], tolerance: float) -> list[Feature]:
     geoms = [geom for _, geom in features]
     if tolerance > 0:
         geoms = list(shapely.coverage_simplify(geoms, tolerance))
-    return [(code, polygonal(geom)) for (code, _), geom in zip(features, geoms)]
+    return [(code, polygonal(geom)) for (code, _), geom in zip(features, geoms, strict=False)]
 
 
 def nearest_owner_cells(land: list[BaseGeometry], spacing: float) -> dict[int, list[BaseGeometry]]:
@@ -33,11 +34,13 @@ def nearest_owner_cells(land: list[BaseGeometry], spacing: float) -> dict[int, l
         owners.append(np.full(len(points), index))
     xy, first = np.unique(np.round(np.vstack(coords), 4), axis=0, return_index=True)
     owner = np.concatenate(owners)[first]
-    cells = shapely.get_parts(shapely.voronoi_polygons(MultiPoint(xy), extend_to=WORLD, tolerance=SNAP))
+    cells = shapely.get_parts(
+        shapely.voronoi_polygons(MultiPoint(xy), extend_to=WORLD, tolerance=SNAP)
+    )
     # A point inside a cell is nearest to that cell's generator, which survives snapping.
     nearest = shapely.STRtree(shapely.points(xy)).query_nearest(shapely.point_on_surface(cells))
     grouped: dict[int, list[BaseGeometry]] = defaultdict(list)
-    for cell_index, point_index in zip(*nearest):
+    for cell_index, point_index in zip(*nearest, strict=False):
         grouped[int(owner[point_index])].append(cells[cell_index])
     return grouped
 

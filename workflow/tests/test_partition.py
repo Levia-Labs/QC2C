@@ -2,10 +2,9 @@ from dataclasses import replace
 
 import shapely
 from conftest import feature, square, write_inputs
-from shapely.geometry import Point
-
 from qc2c_build.load import load_features
 from qc2c_build.partition import KM_PER_DEGREE, WORLD, build_partition
+from shapely.geometry import Point
 
 
 def code_at(parts, lng, lat):
@@ -18,7 +17,7 @@ def test_nearest_covers_world_without_overlap(world):
     parts = build_partition(load_features(world), world)
     geoms = [g for _, g in parts]
     assert shapely.coverage_is_valid(geoms)
-    overlap = sum(a.intersection(b).area for i, a in enumerate(geoms) for b in geoms[i + 1:])
+    overlap = sum(a.intersection(b).area for i, a in enumerate(geoms) for b in geoms[i + 1 :])
     assert overlap < 1e-9
     assert abs(shapely.union_all(geoms).area - WORLD.area) < 1e-9 * WORLD.area
     assert code_at(parts, -150, -60) is not None
@@ -46,7 +45,10 @@ def test_distance_mode_leaves_open_sea_empty(world):
 
 
 def test_antimeridian_halves_survive(world):
-    write_inputs(world.input_dir, [feature("RUS", "Russia", [square(175, 60, 180, 65)], [square(-180, 60, -175, 65)])])
+    write_inputs(
+        world.input_dir,
+        [feature("RUS", "Russia", [square(175, 60, 180, 65)], [square(-180, 60, -175, 65)])],
+    )
     parts = build_partition(load_features(world), world)
     assert code_at(parts, 178, 62) == "RUS"
     assert code_at(parts, -178, 62) == "RUS"
