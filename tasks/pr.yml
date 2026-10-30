@@ -1,0 +1,44 @@
+version: "3"
+
+# One-line wrappers for the pull request round trip, so a session never hand-builds gh --json/--jq
+# queries. Opening and merging publish to GitHub: confirm with the user before running them.
+tasks:
+  open:
+    desc: "Open a PR from the current branch to main, print its URL. Usage: task pr:open -- [--title T --body-file F | --draft]"
+    silent: true
+    preconditions:
+      - sh: command -v gh >/dev/null 2>&1
+        msg: "missing gh: install https://cli.github.com"
+      - sh: '[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]'
+        msg: "on main: create a branch first"
+    cmds:
+      - |
+        case "{{.CLI_ARGS}}" in
+          *--title*) gh pr create --base main {{.CLI_ARGS}} 2>&1 | tail -n 1 ;;
+          *) gh pr create --base main --fill {{.CLI_ARGS}} 2>&1 | tail -n 1 ;;
+        esac
+
+  status:
+    desc: "One line: number, state, mergeability, review, check counts. Usage: task pr:status [PR=<number|branch>]"
+    silent: true
+    preconditions:
+      - sh: command -v gh >/dev/null 2>&1
+        msg: "missing gh: install https://cli.github.com"
+    cmds:
+      - >-
+        gh pr view {{.PR}} --json number,state,mergeable,mergeStateStatus,reviewDecision,statusCheckRollup,url
+        --jq '"#\(.number) \(.state) \(.mergeable)/\(.mergeStateStatus) review=\(if (.reviewDecision // "") == "" then "none" else .reviewDecision end)
+        checks=\([.statusCheckRollup[] | (.conclusion // .state // "PENDING")] | group_by(.) | map("\(.[0])=\(length)") | join(",") | if . == "" then "none" else . end)
+        \(.url)"'
+
+  merge:
+    desc: "Squash-merge a PR, delete its branch, then run git:after-merge. Usage: task pr:merge PR=<number> CONFIRM=yes"
+    silent: true
+    preconditions:
+      - sh: '[ "{{.CONFIRM}}" = "yes" ]'
+        msg: "merge publishes to main and deletes the branch: rerun with CONFIRM=yes"
+      - sh: '[ -n "{{.PR}}" ]'
+        msg: "name the PR: PR=<number>"
+    cmds:
+      - gh pr merge {{.PR}} --squash --delete-branch 2>&1 | tail -n 1
+      - task: :git:after-merge

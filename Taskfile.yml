@@ -14,3 +14,5 @@ includes:
   rtk: .crepidoma/taskfiles/rtk
   setup: .crepidoma/taskfiles/setup
   workflow: ./tasks/workflow.yml
+  local: ./tasks/local.yml
+  pr: ./tasks/pr.yml
